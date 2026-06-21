@@ -1,0 +1,21 @@
+id,name,company,email,deal_value,deal_stage,last_contact_date,notes
+lead_001,Alice Johnson,TechCorp Inc,alice@techcorp.com,120000,proposal,2026-06-19,Interested in enterprise plan. Need custom security review.
+lead_002,Bob Martinez,StartupXYZ,bob@startupxyz.com,15000,qualified,2026-06-15,Need Q3 budget approval. Follow up mid-June.
+lead_003,Charlie Chen,Global Logistics,charlie@globallogistics.com,85000,negotiation,2026-06-20,Discussed contract terms. Waiting for legal review.
+lead_004,Diana Prince,Themyscira Retail,diana@themyscira.com,30000,prospecting,2026-06-01,Cold outreach. Showed interest in automated warehousing.
+lead_005,Evan Wright,Apex Finance,evan@apexfinance.com,145000,negotiation,2026-06-18,CEO wants a demo next Tuesday. High win chance.
+lead_006,Fiona Gallagher,SouthSide Food,fiona@southsidefood.com,8000,prospecting,2026-05-20,Last contact was warm but budget is tight.
+lead_007,George Costanza,Vandelay Industries,george@vandelay.com,5000,prospecting,2026-06-10,Interested in latex import scheduling optimization.
+lead_008,Hannah Abbott,Leaky Cauldron Pub,hannah@leakycauldron.com,22000,qualified,2026-06-14,Wants to upgrade current POS integration.
+lead_009,Ian Malcolm,Jurassic Parks,ian@jurassicparks.com,95000,proposal,2026-06-17,Requires chaos theory modeling capabilities in reports.
+lead_010,Julia Roberts,Pretty Woman Co,julia@prettywoman.com,60000,qualified,2026-06-08,Needs custom templates for retail styling agents.
+lead_011,Kevin Bacon,SixDegrees Network,kevin@sixdegrees.net,40000,proposal,2026-06-16,Evaluating competitors. Call scheduled for next week.
+lead_012,Laura Croft,Tomb Exploration Ltd,laura@tombexplorers.org,110000,negotiation,2026-06-19,Ready to sign if we can support offline sync in remote sites.
+lead_013,Michael Scott,Dunder Mifflin,michael@dundermifflin.com,12000,prospecting,2026-05-15,Spoke about paper distribution optimization. Kept talking about jokes.
+lead_014,Nancy Drew,Drew Investigations,nancy@drewdetectives.com,25000,qualified,2026-06-12,Looking for pattern matching tools. Budget is solid.
+lead_015,Oscar Martinez,Scranton Accounting,oscar@scrantonaccounting.com,18000,proposal,2026-06-18,Analyzing ROI on our platform compared to manual spreadsheets.
+lead_016,Peter Parker,Daily Bugle,peter@dailybugle.com,7000,prospecting,2026-06-02,Freelance lead. Interested in photo storage solutions.
+lead_017,Quentin Tarantino,Pulp Cinema,quentin@pulpcinema.com,75000,negotiation,2026-06-20,Drafting contract terms. Wants non-linear project layouts.
+lead_018,Rachel Green,Central Perk Fashion,rachel@centralperk.com,35000,qualified,2026-06-11,Needs automated follow-up scheduling for buyers.
+lead_019,Steve Rogers,Shield Tech,steve@shieldtech.gov,150000,negotiation,2026-06-20,High priority government contract. Secure server deployment required.
+lead_020,Tony Stark,Stark Industries,tony@starkindustries.com,200000,proposal,2026-06-19,Interested in arc-reactor data monitoring agents. Large deal potential.
