@@ -1,38 +1,38 @@
 """
 Security Module — Google Cloud Secret Manager Wrapper
-Implementation: วันที่ 5
+Implementation: Day 5
 """
 
 import os
 from dotenv import load_dotenv
 
-# โหลด env เพื่อใช้โลคัลก่อนในกรณี Development
+# Load env for local fallback during Development
 load_dotenv()
 
 
 def get_secret(secret_id: str) -> str:
     """
-    ดึงค่า Secret จาก Google Cloud Secret Manager
-    หาก USE_SECRET_MANAGER=false หรือไม่พบไลบรารี จะสลับมาใช้ Environment Variable ทั่วไปแทน (Local Fallback)
+    Retrieve Secret from Google Cloud Secret Manager.
+    If USE_SECRET_MANAGER=false or the library is not installed, it falls back to Environment Variables.
     
     Args:
-        secret_id: รหัสของ Secret (เช่น google-api-key)
+        secret_id: The ID of the secret (e.g., google-api-key).
         
     Returns:
-        ค่าคอนฟิกูเรชันหรือคีย์ลับในรูปแบบสตริง
+        The configuration value or secret key as a string.
     """
     use_sm = os.getenv("USE_SECRET_MANAGER", "false").lower() == "true"
     
     if not use_sm:
-        # Development mode: ดึงจาก Environment Variable โลคัล
+        # Development mode: retrieve from local Environment Variable
         env_key = secret_id.upper().replace("-", "_")
         value = os.getenv(env_key)
         if not value:
-            # หากไม่มี ให้คืนค่าว่างเปล่า หรือกรณีพิเศษ
+            # If not found, return empty string
             return ""
         return value
         
-    # Production mode: ใช้ GCP Secret Manager
+    # Production mode: Use GCP Secret Manager
     try:
         from google.cloud import secretmanager
         client = secretmanager.SecretManagerServiceClient()
@@ -44,7 +44,7 @@ def get_secret(secret_id: str) -> str:
         response = client.access_secret_version(request={"name": name})
         return response.payload.data.decode("UTF-8")
     except ImportError:
-        # Fallback กรณีไม่ได้ติดตั้ง google-cloud-secret-manager บนเครื่องโลคัล
+        # Fallback if google-cloud-secret-manager is not installed locally
         env_key = secret_id.upper().replace("-", "_")
         return os.getenv(env_key, "")
     except Exception as e:

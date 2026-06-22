@@ -1,9 +1,9 @@
 """
 Writer Agent — Agent 3
-Draft email ที่ personalized ในสไตล์ของ SDR คนนั้น ด้วย few-shot learning
+Draft personalized emails matching the SDR style using few-shot learning.
 
-Implementation: วันที่ 3
-ดู Project Plan Section 2.2 (Agent 3)
+Implementation: Day 3
+See Project Plan Section 2.2 (Agent 3)
 """
 
 import json
@@ -16,10 +16,10 @@ from pydantic import BaseModel, Field
 
 # โครงสร้างสำหรับ output ของ Writer Agent
 class DraftEmailSchema(BaseModel):
-    subject: str = Field(description="หัวข้ออีเมล (Subject Line) ที่สั้นกระชับ ดึงดูดความสนใจ ไม่เกิน 60 ตัวอักษร")
-    body: str = Field(description="เนื้อหาอีเมล (Email Body) ภาษาไทย ความยาวไม่เกิน 150 คำ ท่อนทักทายและลงท้ายตามสไตล์ของ SDR")
-    opening_hook: str = Field(description="ประโยคเปิดใจ (Opening Hook) ประโยคแรกของอีเมลที่เชื่อมกับข่าวสารหรือปัญหาบริษัทลูกค้า")
-    personalization_notes: str = Field(description="คำอธิบายว่าเราดึงจุดเด่น/ข่าวสารหรือความชอบของลูกค้าข้อใดมาเขียนเชื่อมโยง")
+    subject: str = Field(description="Catchy and brief email subject line, max 60 characters")
+    body: str = Field(description="Email body text, under 150 words, matching the style and persona of the SDR")
+    opening_hook: str = Field(description="The opening hook sentence of the email connecting to company news or pain points")
+    personalization_notes: str = Field(description="Explanatory notes on how the email was personalized for the prospect")
 
 
 # โหลด instruction prompt
@@ -34,13 +34,13 @@ ADK_MODEL = os.getenv("ADK_MODEL", "gemini-3.5-flash")
 
 def load_sdr_style(sdr_id: str) -> dict:
     """
-    โหลดประวัติสไตล์การเขียนและตัวอย่างอีเมลของ SDR จากไฟล์ JSON
+    Load SDR writing style profile and sample emails from JSON file.
     
     Args:
-        sdr_id: รหัสของ SDR (เช่น sdr_001, sdr_002)
+        sdr_id: The ID of the SDR (e.g., sdr_001, sdr_002).
         
     Returns:
-        ข้อมูลพจนานุกรมประวัติการเขียนและตัวอย่าง
+        Dictionary containing writing style profile and few-shot email templates.
     """
     sdr_dir = Path(__file__).parent.parent / "data" / "sdr_styles"
     file_path = sdr_dir / f"{sdr_id}.json"
@@ -51,8 +51,8 @@ def load_sdr_style(sdr_id: str) -> dict:
         if not file_path.exists():
             return {
                 "sdr_id": "default",
-                "sdr_name": "ผู้ช่วยฝ่ายขายทั่วไป",
-                "style_description": "สไตล์กลางๆ สุภาพ กระชับ",
+                "sdr_name": "General Sales Assistant",
+                "style_description": "Standard, polite, and concise style",
                 "past_emails": []
             }
             
@@ -60,10 +60,10 @@ def load_sdr_style(sdr_id: str) -> dict:
         return json.load(f)
 
 
-# สร้าง Writer Agent
+# Instantiate Writer Agent
 writer_agent = Agent(
     name="writer_agent",
-    description="Agent สำหรับการร่างอีเมลเปิดการขายแบบเฉพาะเจาะจงบุคคลในสไตล์ของนักขายแต่ละคน (Personalized Email Writer Agent)",
+    description="Agent for drafting personalized sales outreach emails matching specific SDR styles (Personalized Email Writer Agent)",
     model=ADK_MODEL,
     instruction=WRITER_AGENT_INSTRUCTION,
     output_schema=DraftEmailSchema

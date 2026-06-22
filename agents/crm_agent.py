@@ -1,9 +1,9 @@
 """
 CRM Agent — Agent 1
-ดึงข้อมูล leads จาก CRM และ rank ตาม win probability score
+Fetch leads from CRM and rank them based on win probability score.
 
-Implementation: วันที่ 1
-ดู Project Plan Section 2.2 (Agent 1)
+Implementation: Day 1
+See Project Plan Section 2.2 (Agent 1)
 """
 
 import os
@@ -17,7 +17,7 @@ from models.data_models import Lead, RankedLead, AgentOutput
 from tools.crm_tools import fetch_leads_from_csv, score_lead, rank_leads
 
 
-# โครงสร้างสำหรับ output ของ Agent (Structured JSON Output)
+# Agent Output Schema structure (Structured JSON Output)
 class LeadSchema(BaseModel):
     id: str
     name: str
@@ -89,16 +89,16 @@ def ranked_lead_to_dict(rl: RankedLead) -> dict:
     }
 
 
-# กำหนด tools สำหรับ Agent
+# Define tools for the Agent
 def crm_fetch_tool(filepath: str) -> List[dict]:
     """
-    ดึงข้อมูล leads ทั้งหมดจากไฟล์ CRM CSV
+    Fetch all leads from CRM CSV file.
     
     Args:
-        filepath: พาธของไฟล์ CSV ที่เก็บข้อมูล leads
+        filepath: Path to the CRM leads CSV file.
         
     Returns:
-        รายการของ Leads ในรูปแบบพจนานุกรม (dictionaries)
+        List of leads as dictionaries.
     """
     leads = fetch_leads_from_csv(filepath)
     return [lead_to_dict(l) for l in leads]
@@ -106,14 +106,14 @@ def crm_fetch_tool(filepath: str) -> List[dict]:
 
 def lead_scorer_tool(leads: List[dict], top_n: int = 5) -> List[dict]:
     """
-    คำนวณคะแนน (score) และจัดอันดับ leads (rank) ตามโอกาสในการปิดดีล
+    Score and rank leads based on closing probability.
     
     Args:
-        leads: รายการของ leads ที่ดึงมาจาก crm_fetch_tool
-        top_n: จำนวน leads ที่สำคัญที่สุดที่ต้องการส่งคืน (ค่าเริ่มต้นคือ 5)
+        leads: List of leads retrieved from crm_fetch_tool.
+        top_n: Number of most important leads to return (default: 5).
         
     Returns:
-        รายการของ RankedLeads ในรูปแบบ dictionaries เรียงจากคะแนนสูงสุดลงมา
+        List of RankedLeads as dictionaries, sorted by score in descending order.
     """
     lead_objects = [dict_to_lead(l) for l in leads]
     ranked_objects = rank_leads(lead_objects, top_n=top_n)
@@ -122,24 +122,24 @@ def lead_scorer_tool(leads: List[dict], top_n: int = 5) -> List[dict]:
 
 def fetch_and_rank_leads_tool(filepath: str, top_n: int = 5) -> List[dict]:
     """
-    ดึงข้อมูล leads จากไฟล์ CSV และจัดอันดับเป็น RankedLeads ในขั้นตอนเดียว
+    Fetch leads from a CSV file and rank them in a single step.
     
     Args:
-        filepath: พาธของไฟล์ CSV
-        top_n: จำนวน leads ที่ต้องการจัดอันดับ
+        filepath: Path to the CSV file.
+        top_n: Number of leads to rank.
         
     Returns:
-        รายการของ RankedLeads ในรูปแบบ dictionaries เรียงจากคะแนนสูงสุดลงมา
+        List of RankedLeads as dictionaries, sorted by score in descending order.
     """
     leads = fetch_leads_from_csv(filepath)
     ranked_objects = rank_leads(leads, top_n=top_n)
     return [ranked_lead_to_dict(rl) for rl in ranked_objects]
 
 
-# สร้าง CRM Agent
+# Instantiate CRM Agent
 crm_agent = Agent(
     name="crm_agent",
-    description="Agent สำหรับการดึงข้อมูลและจัดอันดับลูกค้าเป้าหมาย (CRM Lead Scoring & Ranking)",
+    description="Agent for lead retrieval and prioritization (CRM Lead Scoring & Ranking)",
     model=ADK_MODEL,
     instruction=CRM_AGENT_INSTRUCTION,
     tools=[crm_fetch_tool, lead_scorer_tool, fetch_and_rank_leads_tool],

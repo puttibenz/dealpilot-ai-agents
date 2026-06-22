@@ -1,7 +1,7 @@
 """
 FastAPI Web Portal — DealPilot Dashboard & Execution Controller
 Implementation: วันที่ 5
-ดู Project Plan Section 6 (ui/app.py)
+Project Plan Section 6 (ui/app.py)
 """
 
 import os
@@ -9,36 +9,34 @@ import sys
 import subprocess
 import asyncio
 from pathlib import Path
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, StreamingResponse
 from dotenv import load_dotenv
 
-# โหลดค่า Environment
+# Load Environment variables
 load_dotenv()
 
 app = FastAPI(title="DealPilot AI Sales Assistant Portal")
 
-# กำหนดพาธไฟล์รายงาน
+# Define paths to reports
 DATA_DIR = Path(__file__).parent.parent / "data"
 BRIEFING_FILE = DATA_DIR / "briefing_sdr001.html"
 
 
 @app.get("/health")
 def health_check():
-    """Endpoint สำหรับการตรวจเช็คสุขภาพระบบ (Cloud Run / Health Probe)"""
+    """Health check endpoint for container health probes."""
     return {"status": "healthy", "service": "dealpilot-ai-agents"}
 
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard():
-    """หน้าจอหลัก Dashboard แสดงผลรายงานสรุปรายวัน"""
-    # ตรวจสอบว่าไฟล์รายงานมีอยู่จริงหรือไม่
+    """Main dashboard page displaying the Daily Sales Briefing Report."""
     has_report = BRIEFING_FILE.exists()
     
-    # อ่านหัวข้อข่าวสารล่าสุดแบบจำลองถ้าไม่มีรายงาน
     html_content = f"""
     <!DOCTYPE html>
-    <html lang="th">
+    <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -146,8 +144,8 @@ async def dashboard():
             {"<!-- IFRAME PREVIEW -->" if has_report else ""}
             {f'''
             <div class="report-info">
-                <div class="report-title">📋 ล่าสุด: รายงาน Daily Sales Briefing สำหรับ SDR (สมชาย)</div>
-                <div style="font-size: 14px; color: #64748b;">ไฟล์ต้นทาง: data/briefing_sdr001.html</div>
+                <div class="report-title">📋 Latest: Daily Sales Briefing Report for SDR (Somchai)</div>
+                <div style="font-size: 14px; color: #64748b;">Source File: data/briefing_sdr001.html</div>
             </div>
             <div class="iframe-container">
                 <iframe src="/view-raw-report"></iframe>
@@ -155,9 +153,9 @@ async def dashboard():
             ''' if has_report else f'''
             <div class="empty-state">
                 <div style="font-size: 60px; margin-bottom: 20px;">☕</div>
-                <h2>ยังไม่พบรายงานสรุปผลวันนี้</h2>
-                <p>โปรเจกต์พร้อมรันประมวลผล Multi-Agent เพื่อจัดอันดับ Leads, ค้นข้อมูลเชิงลึก, ร่างอีเมลเสนอขายตามตัวอย่างสไตล์ และจองกิจกรรมปฏิทินของจริง</p>
-                <a href="/run" class="btn-run" style="font-size: 16px; padding: 14px 28px;">🚀 เริ่มต้นประมวลผลระบบ Multi-Agent</a>
+                <h2>No daily briefing report generated yet</h2>
+                <p>The pipeline is ready to run. It will rank CRM leads, research recent news, draft personalized outreach emails matching the SDR's unique writing style, and automatically schedule Google Calendar follow-ups.</p>
+                <a href="/run" class="btn-run" style="font-size: 16px; padding: 14px 28px;">🚀 Trigger Multi-Agent Pipeline</a>
             </div>
             '''}
         </div>
@@ -169,7 +167,7 @@ async def dashboard():
 
 @app.get("/view-raw-report")
 def view_raw_report():
-    """เปิดดูไฟล์ HTML รายงานของจริงแบบดิบผ่าน Iframe"""
+    """Renders the raw HTML briefing report file directly inside the iframe."""
     if BRIEFING_FILE.exists():
         with open(BRIEFING_FILE, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
@@ -178,12 +176,12 @@ def view_raw_report():
 
 @app.get("/run", response_class=HTMLResponse)
 def run_pipeline_page():
-    """หน้าจอจำลองการรันระบบและแสดงผลการประมวลผลแบบสด (Live Terminal)"""
+    """Control panel page running the agent pipeline with live-streaming terminal output."""
     recipient_email = os.getenv("BRIEFING_RECIPIENT_EMAIL", "puttimej@gmail.com")
     
     html_page = f"""
     <!DOCTYPE html>
-    <html lang="th">
+    <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -292,15 +290,15 @@ def run_pipeline_page():
         <div class="runner-card">
             <h2>🚀 DealPilot Agentic Pipeline Controller</h2>
             <div class="parameter-box">
-                <div style="margin-bottom: 8px;"><strong>คอนฟิกูเรชันสำหรับไปป์ไลน์รันสรุปประจำวัน:</strong></div>
-                <div>👤 <strong>Persona Style:</strong> Somchai (sdr_001) - สุภาพมาก, เชิงตัวเลข</div>
-                <div>📧 <strong>อีเมลรับผลลัพธ์:</strong> {recipient_email}</div>
-                <div style="margin-top: 8px; color: #94a3b8;">* ระบบจะเปิดใช้งาน Google Calendar และ Gmail จริงในขั้นตอนนี้</div>
+                <div style="margin-bottom: 8px;"><strong>Daily Briefing Pipeline Configuration:</strong></div>
+                <div>👤 <strong>Persona Style:</strong> Somchai (sdr_001) - Professional & Polite</div>
+                <div>📧 <strong>Recipient Email:</strong> {recipient_email}</div>
+                <div style="margin-top: 8px; color: #94a3b8;">* The pipeline will connect to your real Google Calendar and Gmail APIs.</div>
             </div>
             
             <div class="status-tag" id="status-tag">
                 <span class="spinner" id="spinner"></span> 
-                <span id="status-text">กำลังเริ่มต้นระบบประมวลผล Multi-Agent...</span>
+                <span id="status-text">Initializing Multi-Agent system...</span>
             </div>
             
             <div class="terminal-box" id="terminal"></div>
@@ -319,29 +317,27 @@ def run_pipeline_page():
             
             terminal.innerHTML = "=== INITIALIZING PIPELINE RUN ===\n";
             
-            // เริ่มต้นเชื่อมต่อ EventSource เพื่อรับ Log แบบเรียลไทม์
+            // Connect to EventSource for live logs
             const eventSource = new EventSource('/run/stream');
             
             eventSource.onmessage = function(event) {{
-                // ป้อนข้อความลง Terminal
                 terminal.innerHTML += event.data + "\\n";
-                // เลื่อน Terminal ลงล่างสุดอัตโนมัติ
                 terminal.scrollTop = terminal.scrollHeight;
                 
-                // อัปเดตสเตตัสตามความก้าวหน้า
+                // Update status text based on stdout logs
                 if (event.data.includes("Step 1")) {{
-                    statusText.innerText = "กำลังจัดอันดับ Leads ด้วย CRM Agent...";
+                    statusText.innerText = "Ranking CRM leads via CRM Agent...";
                 }} else if (event.data.includes("Step 2")) {{
-                    statusText.innerText = "กำลังสืบค้นข้อมูลข่าวสารด้วย Research Agent...";
+                    statusText.innerText = "Querying business highlights via Research Agent...";
                 }} else if (event.data.includes("Step 3")) {{
-                    statusText.innerText = "กำลังแต่งจดหมายเสนอขายด้วย Writer Agent...";
+                    statusText.innerText = "Drafting personalized sales emails via Writer Agent...";
                 }} else if (event.data.includes("Step 4")) {{
-                    statusText.innerText = "กำลังสร้างนัดหมายและจัดส่งอีเมลบอร์ดรายงานด้วย Scheduler Agent...";
+                    statusText.innerText = "Scheduling calendar events and sending Daily Briefing via Scheduler Agent...";
                 }}
             }};
             
             eventSource.addEventListener('close', function(event) {{
-                statusText.innerText = "การทำงานประมวลผล Multi-Agent เสร็จสิ้นสมบูรณ์!";
+                statusText.innerText = "Multi-Agent pipeline run completed successfully!";
                 statusText.style.color = "#34d399";
                 spinner.style.display = "none";
                 btnView.style.display = "inline-block";
@@ -349,8 +345,7 @@ def run_pipeline_page():
             }});
             
             eventSource.onerror = function(event) {{
-                // ปิดการเชื่อมต่อเมื่อจบสตรีม
-                statusText.innerText = "ประมวลผลเรียบร้อยแล้ว!";
+                statusText.innerText = "Pipeline executed successfully!";
                 statusText.style.color = "#34d399";
                 spinner.style.display = "none";
                 btnView.style.display = "inline-block";
@@ -365,11 +360,10 @@ def run_pipeline_page():
 
 @app.get("/run/stream")
 def stream_pipeline():
-    """Stream ข้อมูล Log จาก Popen ไปยัง EventSource หน้าเว็บ"""
+    """Streams live console stdout from run_day4.py to EventSource in the browser."""
     async def log_generator():
-        # กำหนดคำสั่งการรัน
         python_exec = sys.executable
-        # ใช้ -u เพื่อให้ stdout บลัฟเฟอร์เป็นแบบ Unbuffered
+        # Use -u to make stdout unbuffered
         cmd = [
             python_exec,
             "-u",
@@ -379,12 +373,10 @@ def stream_pipeline():
             "--recipient-email", os.getenv("BRIEFING_RECIPIENT_EMAIL", "puttimej@gmail.com")
         ]
         
-        # ตั้งค่า PYTHONPATH
         env = os.environ.copy()
         env["PYTHONPATH"] = "."
         
         try:
-            # รัน subprocess แบบอะซิงโครนัส
             process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=subprocess.PIPE,
@@ -392,19 +384,17 @@ def stream_pipeline():
                 env=env
             )
             
-            # อ่านข้อมูลบรรทัดต่อบรรทัด
             while True:
                 line = await process.stdout.readline()
                 if not line:
                     break
                 
                 decoded_line = line.decode('utf-8', errors='replace').rstrip()
-                # กรองคำสั่ง/ปิดบัง PII ใน log ก่อนส่งขึ้น UI
+                # Apply PII Masking to log streams
                 from utils.logging import mask_pii
                 masked_line = mask_pii(decoded_line)
                 
                 yield f"data: {masked_line}\n\n"
-                # หน่วงเวลานิดหน่อยเพื่อให้เอฟเฟกต์ Terminal สวยงามขึ้น
                 await asyncio.sleep(0.05)
                 
             await process.wait()
@@ -417,6 +407,5 @@ def stream_pipeline():
 
 if __name__ == "__main__":
     import uvicorn
-    # เปิดการรันแอปพลิเคชัน
     port = int(os.getenv("PORT", 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)

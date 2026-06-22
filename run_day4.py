@@ -1,6 +1,6 @@
 """
 DealPilot — Day 4 Pipeline Runner Script
-รันระบบ Multi-Agent แบบสมบูรณ์ End-to-End:
+Run the complete end-to-end Multi-Agent system:
 CRM Agent -> Research Agent -> Writer Agent -> Scheduler Agent
 """
 
@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
-# บังคับการแสดงผลภาษาไทยให้ถูกต้องบน Windows console
+# Force output stream encoding to utf-8 for consistency
 sys.stdout.reconfigure(encoding='utf-8')
 
 # โหลด env จากโปรเจกต์ root
@@ -28,25 +28,25 @@ from agents.scheduler_agent import scheduler_agent
 
 
 def main():
-    # 1. จัดการพารามิเตอร์ CLI
+    # 1. Parse CLI arguments
     parser = argparse.ArgumentParser(description="DealPilot Day 4 Sequential Pipeline")
     parser.add_argument(
         "--sdr-id",
         type=str,
         default="sdr_001",
-        help="รหัส SDR ที่ต้องการจำลองสไตล์การเขียน (sdr_001 = สมชาย, sdr_002 = เเควิน)"
+        help="SDR ID to simulate writing style (sdr_001 = Somchai, sdr_002 = Kevin)"
     )
     parser.add_argument(
         "--output",
         type=str,
         default="data/briefing.html",
-        help="พาธไฟล์เอาต์พุต HTML สรุปผลประจำวันบนเครื่องโลคัล (ค่าดีฟอลต์คือ data/briefing.html)"
+        help="Local output path for the daily briefing HTML report (default: data/briefing.html)"
     )
     parser.add_argument(
         "--recipient-email",
         type=str,
         default="sales_rep@company.com",
-        help="อีเมลปลายทางของ SDR สำหรับการรับ Daily Briefing (ค่าดีฟอลต์คือ sales_rep@company.com)"
+        help="Recipient email address for the Daily Briefing (default: sales_rep@company.com)"
     )
     args = parser.parse_args()
 
@@ -64,7 +64,7 @@ def main():
         print(f"❌ ERROR: CRM file not found at {absolute_csv_path}")
         sys.exit(1)
 
-    # โหลดโปรไฟล์ SDR
+    # Load SDR profile
     sdr_profile = load_sdr_style(args.sdr_id)
     print(f"📂 CRM Data File: {absolute_csv_path}")
     print(f"👤 SDR Persona: {sdr_profile.get('sdr_name')} (ID: {args.sdr_id})")
@@ -74,12 +74,12 @@ def main():
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     
     # --------------------------------------------------------------------------
-    # STEP 1: รัน CRM Agent (จัดอันดับ Leads)
+    # STEP 1: Run CRM Agent (Rank Leads)
     # --------------------------------------------------------------------------
-    print("\n[Step 1] ⏳ กำลังเรียกใช้ CRM Agent เพื่อคัดกรอง Top 5 Leads...")
+    print("\n[Step 1] [Running] Calling CRM Agent to filter Top 5 Leads...")
     crm_message = types.Content(
         role="user",
-        parts=[types.Part(text=f"กรุณาจัดอันดับ leads จากไฟล์ CSV นี้: {csv_path}")]
+        parts=[types.Part(text=f"Please fetch and rank the leads from this CSV file: {csv_path}")]
     )
     crm_runner = Runner(
         agent=crm_agent,
@@ -95,9 +95,9 @@ def main():
                 for part in event.content.parts:
                     if part.text:
                         crm_text += part.text
-        print("✅ CRM Agent วิเคราะห์สำเร็จ!")
+        print("✅ CRM Agent analysis complete!")
     except Exception as e:
-        print(f"❌ เกิดข้อผิดพลาดในการรัน CRM Agent: {str(e)}")
+        print(f"❌ Error occurred while running CRM Agent: {str(e)}")
         sys.exit(1)
 
     # Parse CRM
@@ -105,24 +105,24 @@ def main():
         crm_data = json.loads(crm_text)
         ranked_leads = crm_data.get("ranked_leads", [])
     except json.JSONDecodeError as e:
-        print("❌ ERROR: ไม่สามารถแปลงเอาต์พุตของ CRM Agent เป็น JSON ได้")
+        print("❌ ERROR: Could not parse CRM Agent output as JSON")
         print(f"ERROR DETAILS: {str(e)}")
         print(f"RAW OUTPUT:\n{crm_text}")
         sys.exit(1)
 
     if not ranked_leads:
-        print("⚠️ ไม่พบข้อมูล Ranked Leads")
+        print("⚠️ No Ranked Leads found")
         sys.exit(0)
 
     companies = [item.get("lead", {}).get("company") for item in ranked_leads if item.get("lead", {}).get("company")]
-    print(f"🎯 ได้รับรายชื่อ {len(companies)} บริษัทเป้าหมาย: {', '.join(companies)}")
+    print(f"🎯 Received {len(companies)} target companies: {', '.join(companies)}")
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
     # --------------------------------------------------------------------------
-    # STEP 2: รัน Research Agent (วิเคราะห์ข่าวสารและปัญหา)
+    # STEP 2: Run Research Agent (Analyze news and pain points)
     # --------------------------------------------------------------------------
-    print("\n[Step 2] ⏳ กำลังส่งรายชื่อบริษัทไปให้ Research Agent วิเคราะห์ข่าวสารและปัญหา...")
-    research_input_text = f"กรุณาช่วยค้นหาข่าวสารวิเคราะห์และสกัดประเด็นเปิดการขายสำหรับบริษัทเหล่านี้: {', '.join(companies)}"
+    print("\n[Step 2] [Running] Sending company names to Research Agent for analysis...")
+    research_input_text = f"Please research and analyze news, pain points, and suggest talking points for these companies: {', '.join(companies)}"
     research_message = types.Content(
         role="user",
         parts=[types.Part(text=research_input_text)]
@@ -141,9 +141,9 @@ def main():
                 for part in event.content.parts:
                     if part.text:
                         research_text += part.text
-        print("✅ Research Agent วิเคราะห์ข่าวสารสำเร็จ!")
+        print("✅ Research Agent analysis complete!")
     except Exception as e:
-        print(f"❌ เกิดข้อผิดพลาดในการรัน Research Agent: {str(e)}")
+        print(f"❌ Error occurred while running Research Agent: {str(e)}")
         sys.exit(1)
 
     # Parse Research
@@ -151,26 +151,26 @@ def main():
         research_data = json.loads(research_text)
         research_results = research_data.get("research_results", [])
     except json.JSONDecodeError:
-        print("❌ ERROR: ไม่สามารถแปลงเอาต์พุตของ Research Agent เป็น JSON ได้")
+        print("❌ ERROR: Could not parse Research Agent output as JSON")
         sys.exit(1)
 
     research_by_company = {item.get("company", "").lower().strip(): item for item in research_results}
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
     # --------------------------------------------------------------------------
-    # STEP 3: รัน Writer Agent (เขียนดราฟต์อีเมลรายบุคคล)
+    # STEP 3: Run Writer Agent (Draft personalized emails)
     # --------------------------------------------------------------------------
-    print(f"\n[Step 3] ⏳ กำลังเรียกใช้ Writer Agent เพื่อร่างอีเมลในสไตล์ {sdr_profile.get('sdr_name')}...")
+    print(f"\n[Step 3] [Running] Invoking Writer Agent to draft emails in the style of {sdr_profile.get('sdr_name')}...")
     
     # ดึงตัวอย่างอีเมลในอดีต (Few-shot)
     past_emails_formatted = ""
     for idx, sample in enumerate(sdr_profile.get("past_emails", [])):
-        past_emails_formatted += f"\nตัวอย่างที่ {idx+1}:\nหัวข้อ: {sample.get('subject')}\nเนื้อหา:\n{sample.get('body')}\n"
+        past_emails_formatted += f"\nExample #{idx+1}:\nSubject: {sample.get('subject')}\nBody:\n{sample.get('body')}\n"
 
     sdr_context_info = (
-        f"ชื่อ SDR: {sdr_profile.get('sdr_name')}\n"
-        f"คำอธิบายสไตล์การเขียน: {sdr_profile.get('style_description')}\n"
-        f"--- ตัวอย่างอีเมลในอดีต (Few-shot Examples) ---{past_emails_formatted}"
+        f"SDR Name: {sdr_profile.get('sdr_name')}\n"
+        f"Writing Style Description: {sdr_profile.get('style_description')}\n"
+        f"--- Past Emails (Few-shot Examples) ---{past_emails_formatted}"
     )
 
     draft_emails = {}
@@ -191,23 +191,23 @@ def main():
         
         # รวบรวมข้อมูลสำหรับสร้างเมล
         writer_input_text = (
-            f"--- ข้อมูลลูกค้าเป้าหมาย ---\n"
-            f"ชื่อผู้ติดต่อ: {name}\n"
-            f"อีเมล: {email}\n"
-            f"บริษัท: {company}\n"
-            f"มูลค่าดีล: ${value:,.2f}\n"
-            f"ขั้นตอนดีล: {stage}\n\n"
-            f"--- ข้อมูลวิจัยบริษัท ---\n"
-            f"ข่าวเด่น: {', '.join(news)}\n"
-            f"จุดท้าทาย (Pain points): {', '.join(pain_points)}\n"
-            f"ประเด็นเปิดการขายแนะนำ (Talking points): {', '.join(talking_points)}\n"
-            f"แหล่งอ้างอิง: {', '.join(sources)}\n\n"
-            f"--- ข้อมูลโปรไฟล์ SDR ---\n"
+            f"--- Target Lead Info ---\n"
+            f"Contact Name: {name}\n"
+            f"Email: {email}\n"
+            f"Company: {company}\n"
+            f"Expected Deal Value: ${value:,.2f}\n"
+            f"Deal Stage: {stage}\n\n"
+            f"--- Company Research Info ---\n"
+            f"Recent News: {', '.join(news)}\n"
+            f"Challenges (Pain points): {', '.join(pain_points)}\n"
+            f"Suggested Talking points: {', '.join(talking_points)}\n"
+            f"Sources: {', '.join(sources)}\n\n"
+            f"--- SDR Profile Info ---\n"
             f"{sdr_context_info}\n\n"
-            f"กรุณาร่างอีเมลเสนอขายภาษาไทยในสไตล์ของ SDR คนนี้โดยดึงจุดเด่นข้อมูลวิจัยมาใช้ประโยชน์"
+            f"Please draft the sales email in English in the style of this SDR by utilizing the highlights of the research."
         )
         
-        print(f" ✍️ กำลังร่างอีเมลให้ Lead #{idx+1}: {name} ({company})...")
+        print(f" ✍️ Drafting email for Lead #{idx+1}: {name} ({company})...")
         
         writer_message = types.Content(
             role="user",
@@ -232,19 +232,19 @@ def main():
             draft_emails[company.lower().strip()] = json.loads(writer_text)
             
         except Exception as e:
-            print(f"  ⚠️ ร่างอีเมลล้มเหลวสำหรับ {company}: {str(e)}")
+            print(f"  ⚠️ Email draft failed for {company}: {str(e)}")
             draft_emails[company.lower().strip()] = {
-                "subject": "สอบถามข้อมูลเพิ่มเติม",
-                "body": "ร่างอีเมลล้มเหลวเนื่องจากข้อผิดพลาดในระบบ",
-                "opening_hook": "ไม่มี",
-                "personalization_notes": "ข้อผิดพลาดระบบ"
+                "subject": "Request for Information",
+                "body": "Email draft failed due to system error.",
+                "opening_hook": "None",
+                "personalization_notes": "System Error"
             }
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
     # --------------------------------------------------------------------------
-    # STEP 4: รัน Scheduler Agent (จัดนัดหมายปฏิทินและจัดส่งรายงานสรุป)
+    # STEP 4: Run Scheduler Agent (Schedule calendar events and deliver briefing)
     # --------------------------------------------------------------------------
-    print("\n[Step 4] ⏳ กำลังคำนวณวันและสร้างตารางปฏิทินติดตามผลใน Google Calendar...")
+    print("\n[Step 4] [Running] Calculating dates and creating Google Calendar follow-up schedules...")
     
     # รวบรวมข้อมูลเพื่อจัดส่งในรูปแบบ JSON string
     scheduler_input_data = []
@@ -256,10 +256,10 @@ def main():
         research_info = research_by_company.get(company_key, {})
         email_draft = draft_emails.get(company_key, {})
         
-        print(f" 📅 กำลังสร้างกิจกรรมติดตามผลบนปฏิทินสำหรับ: {lead.get('name')} ({lead.get('company')})...")
+        print(f" 📅 Scheduling calendar events for: {lead.get('name')} ({lead.get('company')})...")
         calendar_schedule = create_followup_schedule(
             lead_name=lead.get("name"),
-            email_subject=email_draft.get("subject", "สอบถามข้อมูลเพิ่มเติม"),
+            email_subject=email_draft.get("subject", "Request for Information"),
             deal_value=lead.get("deal_value", 0.0)
         )
         
@@ -275,17 +275,17 @@ def main():
     scheduler_input_json = json.dumps(scheduler_input_data, ensure_ascii=False, indent=2)
     
     scheduler_input_text = (
-        f"ข้อมูลผู้เสนอขาย (SDR):\n"
-        f"- ชื่อ SDR: {sdr_profile.get('sdr_name')}\n"
-        f"- รายละเอียดสไตล์: {sdr_profile.get('style_description')}\n"
-        f"- อีเมลผู้รับรายงาน: {args.recipient_email}\n\n"
-        f"--- ข้อมูลลูกค้าวิจัย ร่างอีเมลเสนอขาย และตารางปฏิทิน (JSON) ---\n"
+        f"SDR Representative Information:\n"
+        f"- SDR Name: {sdr_profile.get('sdr_name')}\n"
+        f"- Style Description: {sdr_profile.get('style_description')}\n"
+        f"- Recipient Email: {args.recipient_email}\n\n"
+        f"--- Company Research, Email Drafts, and Calendar Schedules (JSON) ---\n"
         f"{scheduler_input_json}\n\n"
-        f"กรุณาดำเนินการดังนี้:\n"
-        f"1. ข้อมูลกิจกรรมปฏิทินในฟิลด์ 'calendar_schedule' ได้รับการสร้างเรียบร้อยแล้ว ห้ามเรียกใช้เครื่องมือสร้างปฏิทินเพิ่ม\n"
-        f"2. คุณต้องนำข้อมูล JSON ทั้งหมดนี้ (ห้ามตัดทอน) ส่งให้กับเครื่องมือ `scheduler_generate_html_briefing_tool` ร่วมกับชื่อ SDR และรายละเอียดสไตล์ เพื่อแปลงเป็นหน้าบอร์ด HTML\n"
-        f"3. นำผลลัพธ์ HTML ส่งไปยังอีเมลของท่าน ({args.recipient_email}) ด้วยเครื่องมือ `scheduler_send_briefing_tool` ทันที\n"
-        f"4. ส่งคืน JSON สรุปตามโครงสร้าง `SchedulerAgentOutputSchema` โดยดึงข้อมูลนัดหมายปฏิทินทั้งหมดจากอินพุตมาใส่ใน 'scheduled_events' และระบุ 'briefing_html_path' เป็น 'data/briefing.html'"
+        f"Please execute the following steps:\n"
+        f"1. Calendar follow-up events in the 'calendar_schedule' field have already been pre-calculated and created. Do not invoke the calendar scheduling tool again.\n"
+        f"2. You must pass this complete and unaltered JSON data to the `scheduler_generate_html_briefing_tool` along with the SDR name and style description to convert it into a dashboard HTML page.\n"
+        f"3. Deliver the generated HTML content immediately to the recipient email ({args.recipient_email}) using the `scheduler_send_briefing_tool` tool.\n"
+        f"4. Return the summary JSON conforming to `SchedulerAgentOutputSchema`, extracting all calendar schedule details from the input and listing them in 'scheduled_events', and specifying 'briefing_html_path' as 'data/briefing.html'."
     )
 
     scheduler_message = types.Content(
@@ -307,9 +307,9 @@ def main():
                 for part in event.content.parts:
                     if part.text:
                         scheduler_text += part.text
-        print("✅ Scheduler Agent ทำงานเสร็จสมบูรณ์!")
+        print("✅ Scheduler Agent completed successfully!")
     except Exception as e:
-        print(f"❌ เกิดข้อผิดพลาดในการรัน Scheduler Agent: {str(e)}")
+        print(f"❌ Error occurred while running Scheduler Agent: {str(e)}")
         sys.exit(1)
 
     # Parse Scheduler Output
@@ -321,11 +321,11 @@ def main():
         print(json.dumps(scheduler_output, ensure_ascii=False, indent=2))
         print("================================================================================")
     except json.JSONDecodeError:
-        print("❌ ERROR: ไม่สามารถแปลงเอาต์พุตของ Scheduler Agent เป็น JSON ได้")
+        print("❌ ERROR: Could not parse Scheduler Agent output as JSON")
         print(f"RAW OUTPUT:\n{scheduler_text}")
         sys.exit(1)
 
-    # คัดลอกไฟล์ HTML ไปยังพาธที่กำหนดใน --output
+    # Copy HTML file to the path specified in --output
     dest_path = Path(args.output)
     src_path = Path("data/briefing.html")
     
@@ -334,11 +334,11 @@ def main():
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             import shutil
             shutil.copy(src_path, dest_path)
-            print(f"🎉 คัดลอกไฟล์รายงาน Daily Briefing สำเร็จ: {dest_path.absolute()}")
+            print(f"🎉 Copied Daily Briefing report file successfully: {dest_path.absolute()}")
         except Exception as e:
-            print(f"⚠️ ไม่สามารถคัดลอกไฟล์รายงานไปยัง {dest_path}: {str(e)}")
+            print(f"⚠️ Could not copy report file to {dest_path}: {str(e)}")
     else:
-        print("⚠️ ไม่พบไฟล์ briefing.html ต้นทางในโฟลเดอร์ data/")
+        print("⚠️ Source briefing.html not found in data/ folder")
 
 
 if __name__ == "__main__":

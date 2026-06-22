@@ -1,8 +1,8 @@
 """
-Search Tools — MCP Web Search wrapper และฐานข้อมูลจำลองข้อมูลข่าวสารธุรกิจ
+Search Tools — MCP Web Search wrapper and mock company business database fallback.
 
-Implementation: วันที่ 2
-ดู Project Plan Section 2.2 (Agent 2)
+Implementation: Day 2
+See Project Plan Section 2.2 (Agent 2)
 """
 
 import re
@@ -10,7 +10,7 @@ from typing import List
 from models.data_models import CompanyResearch
 
 
-# ฐานข้อมูลข่าวจำลองสำหรับ 20 บริษัทใน mock_crm.csv เพื่อการรันที่เสถียรและรวดเร็ว
+# Mock news and research database for 20 companies in mock_crm.csv for fast and stable execution
 MOCK_COMPANY_DATABASE = {
     "shield tech": {
         "news": [
@@ -19,14 +19,14 @@ MOCK_COMPANY_DATABASE = {
             "Security breach attempt repelled successfully by Shield Tech's advanced firewall systems"
         ],
         "pain_points": [
-            "ระบบความปลอดภัยต้องการการตรวจสอบอย่างสม่ำเสมอเนื่องจากทำงานกับหน่วยงานรัฐ",
-            "การขยายระบบ Cloud ภายใต้ข้อกำหนดความปลอดภัยที่เข้มงวดทำได้ยาก",
-            "ความต้องการในช่องทางการเชื่อมต่อที่ปลอดภัยและเข้ารหัสในทุกอุปกรณ์"
+            "Security systems require constant audits due to government agency contracts.",
+            "Scaling cloud infrastructure under strict security compliance is difficult.",
+            "Need for secure, encrypted communication channels across all devices."
         ],
         "talking_points": [
-            "ยินดีด้วยกับทุนรอบ Series C มูลค่า 50 ล้านเหรียญสำหรับระบบป้องกันภัย AI ครับ!",
-            "เราทราบว่าระบบของคุณต้องรองรับการสื่อสารข้อมูลของรัฐบาลที่ปลอดภัยสูงสุด",
-            "เราขอเสนอโซลูชันที่ช่วยตรวจสอบและจัดการสิทธิ์การเข้าถึงข้อมูลตามมาตรฐานความปลอดภัย"
+            "Congrats on the Series C funding of $50M for AI defense systems!",
+            "We understand your system needs to support high-security government communications.",
+            "We offer a solution to help monitor and manage data access permissions in compliance with safety standards."
         ],
         "sources": ["TechCrunch", "Government Technology", "Defense News"]
     },
@@ -37,14 +37,14 @@ MOCK_COMPANY_DATABASE = {
             "Regulatory compliance changes force Apex Finance to upgrade reporting systems"
         ],
         "pain_points": [
-            "ความยุ่งยากในการปรับปรุงระบบรายงานให้สอดคล้องกับกฎระเบียบการเงินใหม่",
-            "ปริมาณธุรกรรมสินทรัพย์ดิจิทัลที่เติบโตอย่างรวดเร็วจนระบบรับโหลดไม่ไหวในบางช่วง",
-            "การจัดการพอร์ตการลงทุนแบบอัตโนมัติยังต้องการโมเดลการคำนวณที่แม่นยำขึ้น"
+            "Difficulty in updating reporting systems to comply with new financial regulations.",
+            "Rapidly growing digital asset transaction volumes causing occasional system load spikes.",
+            "Automated portfolio management still requires more precise calculation models."
         ],
         "talking_points": [
-            "ยินดีด้วยกับอัตราการเติบโตของธุรกรรมสินทรัพย์ดิจิทัลถึง 40% ครับ!",
-            "เราสามารถช่วยแบ่งเบาภาระการปรับปรุงระบบตรวจสอบการปฏิบัติตามกฎเกณฑ์การเงินล่าสุดได้",
-            "ระบบจัดสรรและปรับสมดุลพอร์ตอัตโนมัติของคุณสามารถทำงานร่วมกับ AI Agent ของเราได้เป็นอย่างดี"
+            "Congrats on the 40% growth in digital asset transactions!",
+            "We can help ease the burden of updating your systems for the latest financial compliance regulations.",
+            "Our AI Agents can seamlessly integrate with your automated portfolio balancing tools."
         ],
         "sources": ["Bloomberg", "FinTech Futures", "Wall Street Journal"]
     },
@@ -55,14 +55,14 @@ MOCK_COMPANY_DATABASE = {
             "Stark Industries experiences increased demand for real-time sensor analytics in energy grids"
         ],
         "pain_points": [
-            "ระบบการรวบรวมข้อมูลเซ็นเซอร์แบบเรียลไทม์ในโครงข่ายพลังงานมีขนาดใหญ่เกินกว่าจะประมวลผลด้วยมือ",
-            "การย้ายฐานข้อมูลระบบเดิม (legacy infrastructure) ไปยังระบบสะอาดตัวใหม่",
-            "ต้องการระบบวิเคราะห์ความปลอดภัยและการทำงานที่ต้องทำงานอย่างต่อเนื่องตลอด 24 ชั่วโมง"
+            "Real-time sensor data collection in energy grids is too large for manual processing.",
+            "Migrating legacy software infrastructure to the new clean energy monitoring system is complex.",
+            "Requires a continuous 24/7 safety and operations monitoring system."
         ],
         "talking_points": [
-            "ประทับใจกับนวัตกรรมการติดตามข้อมูลเครื่องปฏิกรณ์อาร์กตัวใหม่มากครับ",
-            "เรามีแพลตฟอร์มวิเคราะห์ข้อมูลเซ็นเซอร์แบบเรียลไทม์ที่สอดคล้องกับระบบ Clean Energy Monitoring ของคุณ",
-            "AI Agent ของเราสามารถช่วยเฝ้าระวังความปลอดภัยและวิเคราะห์ความเสี่ยงโครงข่ายพลังงานได้อัตโนมัติ"
+            "Very impressed by the new arc-reactor data monitoring technology!",
+            "We offer a real-time sensor analytics platform that aligns with your clean energy monitoring initiatives.",
+            "Our AI Agent can help automate safety monitoring and risk analysis for energy grids 24/7."
         ],
         "sources": ["Stark Energy Portal", "Wired", "Scientific American"]
     },
@@ -73,14 +73,14 @@ MOCK_COMPANY_DATABASE = {
             "Connectivity issues plague Tomb Exploration's field research teams in remote jungle areas"
         ],
         "pain_points": [
-            "การเชื่อมต่ออินเทอร์เน็ตที่ติดขัดในพื้นที่ห่างไกลทำให้ส่งข้อมูลกลับศูนย์ใหญ่ไม่ได้",
-            "ความยากลำบากในการปรับประสานข้อมูลแผนที่และ GPS แบบออฟไลน์",
-            "นักวิจัยภาคสนามเสียเวลากับการคีย์ข้อมูลการสำรวจด้วยมือ"
+            "Intermittent internet connectivity in remote areas prevents data synchronization back to HQ.",
+            "Difficulty in synchronizing offline maps and GPS data.",
+            "Field researchers spend too much time manually entering survey data."
         ],
         "talking_points": [
-            "ยินดีด้วยกับการขยายพื้นที่สำรวจไปยังโซนอเมริกาใต้ครับ!",
-            "เรามีระบบสนับสนุนการทำงานแบบออฟไลน์ (Offline-first sync) ที่ช่วยเก็บข้อมูลโดยไม่ต้องมีอินเทอร์เน็ต",
-            "AI ของเราสามารถช่วยจัดการแปลงข้อมูลเอกสารบันทึกการสำรวจด้วยภาพถ่ายเพื่อความรวดเร็วได้"
+            "Congrats on expanding operations to South America!",
+            "We have an offline-first sync solution that helps gather and queue data without internet access.",
+            "Our AI can help digitize paper-based field survey records from photographs to save time."
         ],
         "sources": ["Archaeology Today", "National Geographic", "Global Mapping News"]
     },
@@ -91,14 +91,14 @@ MOCK_COMPANY_DATABASE = {
             "Industry analysts praise TechCorp's new security features in the cloud"
         ],
         "pain_points": [
-            "มีงานบริการลูกค้าค้างสะสม (backlog) จำนวนมากเนื่องจากจำนวนผู้ใช้โตเร็วเกินไป",
-            "การเชื่อมโยงระบบ workflow automation ตัวใหม่เข้ากับแอปพลิเคชันเดิมของลูกค้า",
-            "การฝึกอบรมทีมงานสนับสนุนให้เข้าใจความปลอดภัยระบบคลาวด์แบบใหม่"
+            "Large backlog of customer support tickets due to rapid user base expansion.",
+            "Connecting the new workflow automation system with clients' legacy applications.",
+            "Training support staff on the new cloud security standards."
         ],
         "talking_points": [
-            "ยินดีด้วยกับแผนกซอฟต์แวร์ระดับองค์กรสำหรับการทำ Workflow Automation ตัวใหม่ครับ!",
-            "เราสามารถช่วยจัดการกับ Backlog งานบริการลูกค้าของคุณด้วย AI Customer Service Agents",
-            "เราช่วยลดความยุ่งยากในการเชื่อมโยงระบบออโตเมชันตัวใหม่เข้ากับฐานข้อมูลเดิมของคุณได้"
+            "Congrats on the launch of your new workflow automation enterprise division!",
+            "We can help manage your customer service backlog with AI customer support agents.",
+            "We can simplify integrating your new automation workflows with clients' legacy databases."
         ],
         "sources": ["TechInAsia", "Enterprise Software Review", "SaaS Insider"]
     }
@@ -107,22 +107,22 @@ MOCK_COMPANY_DATABASE = {
 
 def search_company_news(company: str) -> List[str]:
     """
-    ค้นหาข้อมูลข่าวสารล่าสุดของบริษัทในรอบ 30 วันที่ผ่านมา
+    Search for the latest company news within the past 30 days.
     
     Args:
-        company: ชื่อบริษัทที่ต้องการค้นหาข่าว
+        company: The name of the company to search news for.
         
     Returns:
-        รายการข่าวล่าสุด (สูงสุด 3 รายการ)
+        List of recent news stories (maximum 3).
     """
     company_lower = company.lower().strip()
     
-    # พยายามหาแบบตรงเป้าหมายในฐานข้อมูลจำลองก่อน
+    # Try direct target matching in the mock database first
     for name, data in MOCK_COMPANY_DATABASE.items():
         if name in company_lower or company_lower in name:
             return data["news"]
             
-    # กรณีไม่พบข้อมูลบริษัทใน Mock DB ให้สร้างข่าวจำลองแบบ Dynamic
+    # Fallback dynamic news generation if company is not in the Mock DB
     return [
         f"{company} announces major expansion of its digital services and cloud solutions division.",
         f"{company} focuses on automating manual workflows to increase operational efficiency in 2026.",
@@ -132,37 +132,36 @@ def search_company_news(company: str) -> List[str]:
 
 def extract_pain_points(news: List[str]) -> List[str]:
     """
-    วิเคราะห์ข้อมูลข่าวสารและดึงความท้าทายหรือจุดติดขัด (Pain Points) ของบริษัทออกมา
+    Analyze news information and extract key challenges or pain points for the company.
     
     Args:
-        news: รายการของข่าวสารล่าสุดที่ดึงมาจากขั้นตอนก่อนหน้า
+        news: List of recent news highlights.
         
     Returns:
-        รายการความท้าทาย/ปัญหาของบริษัท
+        List of company challenges/pain points.
     """
-    # ตรวจสอบหาความสอดคล้องในฐานข้อมูลจำลอง
+    # Check for matching news in the mock database
     for data in MOCK_COMPANY_DATABASE.values():
-        # ถ้ามีข่าวสารข่าวใดข่าวหนึ่งตรงกัน
         if any(n in data["news"] for n in news):
             return data["pain_points"]
             
-    # กรณีข่าวสารแบบ Dynamic ทั่วไป สกัด pain points จำลอง
+    # Dynamic heuristic extraction for general news
     pain_points = []
     for item in news:
         item_lower = item.lower()
         if "expansion" in item_lower or "rapid" in item_lower:
-            pain_points.append("ความยากลำบากในการปรับขนาดการทำงาน (scaling) ให้ทันการเติบโต")
+            pain_points.append("Difficulty scaling operations to match rapid growth.")
         if "workflow" in item_lower or "manual" in item_lower:
-            pain_points.append("การพึ่งพากระบวนการแบบแมนนวลทำให้พนักงานเสียเวลาและเกิดข้อผิดพลาด")
+            pain_points.append("Reliance on manual processes causing delays and human error.")
         if "security" in item_lower or "compliance" in item_lower or "regulation" in item_lower:
-            pain_points.append("แรงกดดันด้านการตรวจสอบและการปฏิบัติตามมาตรฐานความปลอดภัยที่เข้มงวด")
+            pain_points.append("Pressure from audits and compliance with strict security regulations.")
             
-    # Fallback หากไม่มีคีย์เวิร์ดตรงเลย
+    # Fallback if no keywords match
     if not pain_points:
         pain_points = [
-            "กระบวนการทำงานภายในล่าช้า ขาดระบบอัตโนมัติในการช่วยประมวลผลข้อมูล",
-            "การขาดข้อมูลเชิงลึกแบบเรียลไทม์เพื่อสนับสนุนการตัดสินใจของฝ่ายบริหาร",
-            "การบริการลูกค้าปลายทางติดขัดเนื่องจากการเติบโตแบบก้าวกระโดด"
+            "Slow internal workflows lacking automation for data processing.",
+            "Lack of real-time insights to support executive decision-making.",
+            "Bottlenecks in customer service due to exponential user growth."
         ]
         
     return pain_points[:3]
@@ -170,29 +169,29 @@ def extract_pain_points(news: List[str]) -> List[str]:
 
 def generate_talking_points(research: CompanyResearch) -> List[str]:
     """
-    สร้างจุดเปิดใจ/ประโยคเปิดการขาย (Talking Points) ที่ SDR สามารถหยิบไปใช้ทักทายลูกค้าในอีเมลได้เลย
+    Generate starting hooks / talking points that SDRs can use in their emails.
     
     Args:
-        research: วัตถุข้อมูล CompanyResearch ที่มีข่าวสารและ Pain Points ครบถ้วน
+        research: CompanyResearch object containing news and pain points.
         
     Returns:
-        รายการ Talking Points ภาษาไทยที่กระชับและดึงดูดใจ
+        List of concise and engaging talking points in English.
     """
     company_lower = research.company.lower().strip()
     
-    # ดึงจากฐานข้อมูลจำลองโดยตรงถ้ามี
+    # Try fetching from mock database directly if present
     for name, data in MOCK_COMPANY_DATABASE.items():
         if name in company_lower or company_lower in name:
             return data["talking_points"]
             
-    # เจนเนอเรตแบบ Heuristic
+    # Heuristic generation
     talking_points = []
-    talking_points.append(f"เห็นข่าวล่าสุดเรื่องแผนการพัฒนาระบบคลาวด์และดิจิทัลของทาง {research.company} แล้วน่าสนใจมากครับ")
+    talking_points.append(f"I saw the recent news about {research.company}'s cloud and digital expansion plans, which look very promising.")
     
     if research.pain_points:
         primary_pain = research.pain_points[0]
-        talking_points.append(f"เราทราบว่าหลายบริษัทที่กำลังเผชิญปัญหาเรื่อง '{primary_pain}' สามารถใช้ระบบ Multi-Agent ของเราช่วยแก้ปัญหานี้ได้โดยตรง")
+        talking_points.append(f"We know that companies facing challenges like '{primary_pain}' can directly benefit from our Multi-Agent system.")
         
-    talking_points.append(f"ยินดีด้วยกับการขยายพันธมิตรทางเทคโนโลยีล่าสุดของ {research.company} หวังว่าเราจะได้ร่วมงานกันในระบบตรวจสอบอัตโนมัติครับ")
+        talking_points.append(f"Congrats on {research.company}'s latest tech partnership! We would love to collaborate on automated monitoring systems.")
     
     return talking_points[:3]

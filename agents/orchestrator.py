@@ -1,7 +1,7 @@
 """
 DealPilot Orchestrator — ADK SequentialAgent
-เชื่อมทุก agent แบบ sequential pipeline
-Implementation: วันที่ 4
+Connect all agents in a sequential pipeline.
+Implementation: Day 4
 """
 
 import warnings
@@ -11,7 +11,7 @@ from agents.research_agent import research_agent
 from agents.writer_agent import writer_agent
 from agents.scheduler_agent import scheduler_agent
 
-# ซ่อนคำแจ้งเตือน deprecation ของ SequentialAgent เพื่อไม่ให้รบกวนการแสดงผล
+# Silence SequentialAgent deprecation warnings to keep logs clean
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 orchestrator = SequentialAgent(

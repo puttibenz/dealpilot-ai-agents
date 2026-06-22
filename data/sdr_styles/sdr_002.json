@@ -1,19 +1,19 @@
 {
   "sdr_id": "sdr_002",
-  "sdr_name": "เควิน (Kevin)",
-  "style_description": "สไตล์เป็นกันเอง, กระชับมาก, ทันสมัย, คุยง่ายและรวดเร็ว. ชอบชวนคุยประเด็นข่าวดังหรือจุดที่น่าสนใจของบริษัทลูกค้านำหน้า. มักขึ้นต้นด้วยคำว่า 'สวัสดีครับคุณ...' และลงท้ายด้วย 'ขอบคุณครับ' หรือ 'คุยกันต่อนะครับ เควิน'.",
+  "sdr_name": "Kevin",
+  "style_description": "Casual style, very brief, modern, conversational and fast. Likes to start with news highlights or interesting details about the prospect's company. Often starts with 'Hi [Name],' and ends with 'Thanks,' or 'Talk soon, Kevin'.",
   "past_emails": [
     {
-      "subject": "ยินดีด้วยกับ Series C ของ Shield Tech ครับ! 🚀",
-      "body": "สวัสดีครับคุณสตีฟ,\n\nผมเพิ่งเห็นข่าวการระดมทุนรอบ Series C มูลค่า 50 ล้านดอลลาร์ของ Shield Tech ยินดีด้วยนะครับ! สุดยอดมากๆ\n\nเมื่อทีมขยายตัวเร็วแบบนี้ ระบบเฝ้าระวังความปลอดภัยมักจะรับภาระหนักขึ้น เรามีผู้ช่วย AI Agent ที่คอยลดโหลดงานหลังบ้านและจัดการแจ้งเตือนผิดพลาดได้ดีขึ้นเยอะเลยครับ\n\nสัปดาห์นี้พอมีเวลาคุยกันสั้นๆ สัก 10 นาทีไหมครับ? สะดวกวันไหนบอกได้เลย!\n\nขอบคุณครับ,\nเควิน"
+      "subject": "Congrats on Shield Tech's Series C! 🚀",
+      "body": "Hi Steve,\n\nI just saw the news about Shield Tech securing $50M in Series C funding. Big congratulations! That's awesome.\n\nWhen scaling this fast, security systems can take a heavy load. We build AI Agents that help reduce backend stress and handle false positive alerts a lot better.\n\nDo you have 10 minutes for a quick chat this week? Let me know what day works best!\n\nThanks,\nKevin"
     },
     {
-      "subject": "เห็นแอปใหม่ของ TechCorp เจ๋งดีครับ ขอถามเรื่องระบบทราฟฟิกหน่อย",
-      "body": "สวัสดีครับคุณอลิส,\n\nผมลองเล่นฟีเจอร์ Workflow Automation ตัวใหม่ของ TechCorp แล้วเจ๋งมากเลยครับ ชอบตัว UI มาก\n\nแต่เห็นว่าช่วงนี้ผู้ใช้งานเพิ่มขึ้นเร็วมาก อาจจะมีปัญหาเรื่องคิวบริการลูกค้าสะสมหรือระบบหลังบ้านตอบสนองช้าบ้างไหมครับ? เราเพิ่งช่วยระบบแนวนี้ปรับปรุงความเร็วการจัดการคำขอได้ถึง 35% เลยคิดว่าน่าจะเป็นประโยชน์\n\nถ้าสนใจคุยแลกเปลี่ยนไอเดียกันสบายๆ สัปดาห์หน้า วันอังคารช่วงบ่ายสะดวกไหมครับ?\n\nคุยกันต่อนะครับ,\nเควิน"
+      "subject": "Loved TechCorp's new app! Quick question on traffic management",
+      "body": "Hi Alice,\n\nI tried out TechCorp's new Workflow Automation feature and it looks amazing. I really love the UI!\n\nI noticed your user base is growing super fast. Are you facing any customer queue build-ups or slow backend response times? We recently helped a similar system improve request handling speed by 35% and thought it might be helpful.\n\nIf you're open to a casual chat, are you free next Tuesday afternoon?\n\nTalk soon,\nKevin"
     },
     {
-      "subject": "พอร์ตสินทรัพย์ดิจิทัลใหม่ของ Apex Finance และวิธีจัดการระบบให้เสถียร",
-      "body": "สวัสดีครับคุณอีแวน,\n\nติดตามข่าวธุรกรรมสินทรัพย์ดิจิทัลของ Apex Finance ที่โตขึ้นตั้ง 40% อยู่ครับ ยอดเยี่ยมมากครับช่วงนี้!\n\nทราฟฟิกโตขนาดนี้ ระบบตรวจสอบการปฏิบัติตามเกณฑ์กฎระเบียบ (compliance) น่าจะกำลังยุ่งเลยใช่ไหมครับ? เราเพิ่งทำ AI คอยช่วยตรวจจับข้อกำหนดความปลอดภัยการเงินแบบอัตโนมัติ ซึ่งช่วยเซฟเวลาทีมไอทีไปได้ครึ่งๆ เลยครับ\n\nพฤหัสบดีนี้บ่ายสอง โมง สะดวกวิดีโอคอลสั้นๆ 15 นาทีไหมครับ? เผื่อได้แชร์แนวทางร่วมกัน\n\nคุยกันต่อนะครับ,\nเควิน"
+      "subject": "Apex Finance's new digital asset portfolio & system stability",
+      "body": "Hi Evan,\n\nI've been following the news about Apex Finance's digital asset transactions growing by 40%. Fantastic milestone!\n\nWith traffic growing this fast, I imagine your compliance and IT security teams are kept quite busy. We built an AI assistant that automates compliance checks, saving IT teams about half their time.\n\nAre you free for a quick 15-minute call this Thursday at 2 PM? Would love to share some ideas.\n\nTalk soon,\nKevin"
     }
   ]
 }

@@ -1,6 +1,6 @@
 """
 Calendar Tools — Google Calendar API Integration with local mock fallback
-Implementation: วันที่ 4
+Implementation: Day 4
 """
 
 import os
@@ -21,9 +21,9 @@ SCOPES = [
 
 def get_google_credentials() -> Optional[Credentials]:
     """
-    โหลดหรือขอสิทธิ์ (OAuth) สำหรับการเชื่อมต่อ Google APIs (Calendar & Gmail)
+    Load or request OAuth credentials for Google APIs (Calendar & Gmail).
     """
-    # ค้นหาพาธของ client_secret.json จากตำแหน่งที่เป็นไปได้
+    # Locate client_secret.json path from potential locations
     possible_paths = [
         Path("agents/credentials/client_secret.json"),
         Path("credentials/client_secret.json"),
@@ -38,16 +38,16 @@ def get_google_credentials() -> Optional[Credentials]:
             break
             
     if not client_secret_path:
-        # พยายามหาใน current working directory ในแบบอื่นๆ
+        # Search current working directory recursively as fallback
         for p in Path(".").rglob("client_secret.json"):
             client_secret_path = p
             break
 
     if not client_secret_path:
-        print("⚠️ Warning: client_secret.json not found. Operating in local Mock Mode.")
+        print("[Warning] Warning: client_secret.json not found. Operating in local Mock Mode.")
         return None
         
-    # ไฟล์เก็บ token
+    # File to store the access token
     token_path = Path("token.json")
     creds = None
     
@@ -55,15 +55,15 @@ def get_google_credentials() -> Optional[Credentials]:
         try:
             creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
         except Exception as e:
-            print(f"⚠️ Warning: Failed to load token.json: {str(e)}")
+            print(f"[Warning] Failed to load token.json: {str(e)}")
             
-    # ถ้าไม่มี token หรือ token หมดอายุ
+    # If there are no credentials or they are expired
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             try:
                 creds.refresh(Request())
             except Exception as e:
-                print(f"⚠️ Refresh token expired or failed: {str(e)}")
+                print(f"[Warning] Refresh token expired or failed: {str(e)}")
                 creds = None
         
         if not creds:
@@ -71,13 +71,13 @@ def get_google_credentials() -> Optional[Credentials]:
                 flow = InstalledAppFlow.from_client_secrets_file(
                     str(client_secret_path), SCOPES
                 )
-                # เปิดเบราว์เซอร์สำหรับเข้าสู่ระบบและยืนยันสิทธิ์
+                # Open browser for authentication flow
                 creds = flow.run_local_server(port=0)
-                # บันทึก token สำหรับใช้งานครั้งต่อไป
+                # Save token for future runs
                 with open(token_path, "w") as token_file:
                     token_file.write(creds.to_json())
             except Exception as e:
-                print(f"❌ Failed to authorize OAuth: {str(e)}")
+                print(f"[Error] Failed to authorize OAuth: {str(e)}")
                 return None
                 
     return creds
@@ -85,18 +85,18 @@ def get_google_credentials() -> Optional[Credentials]:
 
 def create_followup_event(lead_name: str, event_title: str, date_str: str, notes: str) -> dict:
     """
-    สร้างนัดหมายติดตามผลใน Google Calendar จริง หรือปฏิทินจำลอง (mock_calendar.json)
+    Create a follow-up event in real Google Calendar or log to local mock file (mock_calendar.json).
     """
     creds = get_google_credentials()
     
-    # แปลงวันที่
+    # Parse date
     try:
         event_date = datetime.strptime(date_str, "%Y-%m-%d")
     except ValueError:
         event_date = datetime.now() + timedelta(days=1)
         date_str = event_date.strftime("%Y-%m-%d")
 
-    # กำหนดช่วงเวลา (ให้เริ่ม 09:00 น. นาน 30 นาที)
+    # Define time slot (start 09:00 AM for 30 minutes duration)
     start_time = f"{date_str}T09:00:00"
     end_time = f"{date_str}T09:30:00"
 
@@ -123,7 +123,7 @@ def create_followup_event(lead_name: str, event_title: str, date_str: str, notes
             }
             
             event = service.events().insert(calendarId='primary', body=event_body).execute()
-            print(f"   📅 Google Calendar Event Created: {event.get('summary')} ({date_str})")
+            print(f"   [Calendar] Google Calendar Event Created: {event.get('summary')} ({date_str})")
             return {
                 "success": True,
                 "event_id": event.get("id"),
@@ -133,9 +133,9 @@ def create_followup_event(lead_name: str, event_title: str, date_str: str, notes
                 "mode": "real"
             }
         except Exception as e:
-            print(f"   ⚠️ Failed to call Google Calendar API: {str(e)}. Falling back to Mock Mode.")
+            print(f"   [Warning] Failed to call Google Calendar API: {str(e)}. Falling back to Mock Mode.")
 
-    # Local Mock fallback: บันทึกข้อมูลจำลองลงไฟล์ JSON
+    # Local Mock fallback: Save calendar event to local JSON file
     mock_dir = Path("data")
     mock_dir.mkdir(exist_ok=True)
     mock_file = mock_dir / "mock_calendar.json"
@@ -162,7 +162,7 @@ def create_followup_event(lead_name: str, event_title: str, date_str: str, notes
     with open(mock_file, "w", encoding="utf-8") as f:
         json.dump(calendar_events, f, ensure_ascii=False, indent=2)
         
-    print(f"   📝 Mock Calendar Event Saved to local file: {event_title} on {date_str}")
+    print(f"   [Mock] Mock Calendar Event Saved to local file: {event_title} on {date_str}")
     return {
         "success": True,
         "event_id": mock_event["event_id"],
@@ -175,16 +175,16 @@ def create_followup_event(lead_name: str, event_title: str, date_str: str, notes
 
 def create_followup_schedule(lead_name: str, email_subject: str, deal_value: float) -> List[dict]:
     """
-    สร้างตารางติดตามงาน (Day 0, Day 3, Day 7, Day 14) บันทึกลงปฏิทิน
+    Create a sequence of follow-up events (Day 0, Day 3, Day 7, Day 14) logged to calendar.
     """
     ref_date = datetime.now()
     schedule_events = []
     
     intervals = [
-        (0, f"ส่งอีเมลแรกเสนอขาย: {lead_name}", f"ส่งอีเมลฉบับแรกหัวข้อ '{email_subject}' มูลค่าดีล ${deal_value:,.2f}"),
-        (3, f"Follow-up #1: {lead_name}", "ตรวจสอบการตอบกลับและส่งเมลทวงถามฉบับที่ 1 หากยังไม่มีการตอบรับ"),
-        (7, f"Follow-up #2: {lead_name}", "ส่งอีเมลติดตามฉบับที่ 2 เพื่อกระตุ้นความสนใจเพิ่มเติม"),
-        (14, f"Break-up Email: {lead_name}", "ส่งอีเมลถอดใจฉบับสุดท้ายเพื่อสรุปหรือยุติการติดต่อดีลนี้ชั่วคราว")
+        (0, f"Send introductory proposal email: {lead_name}", f"Send first email with subject '{email_subject}' for deal value ${deal_value:,.2f}"),
+        (3, f"Follow-up #1: {lead_name}", "Check for replies and send first follow-up email if no response received."),
+        (7, f"Follow-up #2: {lead_name}", "Send second follow-up email to generate interest."),
+        (14, f"Break-up Email: {lead_name}", "Send final break-up email to close or temporarily suspend this deal.")
     ]
     
     for days, title, notes in intervals:

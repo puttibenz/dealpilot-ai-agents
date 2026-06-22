@@ -1,7 +1,7 @@
 """
 Scheduler Agent — Agent 4
-วาง follow-up calendar และส่ง briefing email
-Implementation: วันที่ 4
+Schedule follow-up calendar events and send daily briefing email.
+Implementation: Day 4
 """
 
 import os
@@ -15,18 +15,18 @@ from tools.email_tools import send_briefing_email
 
 
 class CalendarEventSchema(BaseModel):
-    event_id: str = Field(description="ไอดีนัดหมายปฏิทินที่สร้างขึ้น")
-    link: str = Field(description="ลิงก์สำหรับเข้าดูนัดหมาย Google Calendar")
-    title: str = Field(description="ชื่อหัวข้อนัดหมาย")
-    date: str = Field(description="วันที่นัดหมาย (YYYY-MM-DD)")
-    mode: str = Field(description="โหมดการทำงาน: real หรือ mock")
+    event_id: str = Field(description="Created calendar event ID")
+    link: str = Field(description="Google Calendar event link")
+    title: str = Field(description="Calendar event title")
+    date: str = Field(description="Scheduled date (YYYY-MM-DD)")
+    mode: str = Field(description="Operation mode: real or mock")
 
 
 class SchedulerAgentOutputSchema(BaseModel):
-    scheduled_events: List[CalendarEventSchema] = Field(description="รายการนัดหมายทั้งหมดที่สร้างขึ้นบนปฏิทิน")
-    briefing_sent: bool = Field(description="สถานะการส่งอีเมลรายงาน Daily Briefing สำเร็จหรือไม่")
-    briefing_recipient: str = Field(description="อีเมลปลายทางของผู้รับรายงานสรุป")
-    briefing_html_path: str = Field(description="พาธของไฟล์ HTML สรุปผลประจำวันบนโลคัลดิสก์")
+    scheduled_events: List[CalendarEventSchema] = Field(description="List of all scheduled calendar events")
+    briefing_sent: bool = Field(description="Status indicating if the Daily Briefing email was sent successfully")
+    briefing_recipient: str = Field(description="Recipient email address of the Daily Briefing report")
+    briefing_html_path: str = Field(description="Local file path to the generated HTML briefing report")
 
 
 # โหลด instruction prompt
@@ -42,29 +42,29 @@ ADK_MODEL = os.getenv("ADK_MODEL", "gemini-3.1-flash-lite")
 # กำหนด tools สำหรับ Agent
 def scheduler_create_schedule_tool(lead_name: str, email_subject: str, deal_value: float) -> List[dict]:
     """
-    สร้างนัดหมายติดตามผล 4 ช่วงเวลา (Day 0, Day 3, Day 7, Day 14) ใน Google Calendar สำหรับ Lead คนนี้
+    Create a 4-step follow-up calendar schedule (Day 0, Day 3, Day 7, Day 14) in Google Calendar for this Lead.
     
     Args:
-        lead_name: ชื่อติดต่อของ Lead
-        email_subject: หัวข้อจดหมายเสนอขายแรก
-        deal_value: มูลค่าของดีลเสนอขาย
+        lead_name: Contact name of the Lead.
+        email_subject: Subject line of the introductory email.
+        deal_value: Expected deal value.
         
     Returns:
-        รายการนัดหมาย 4 ช่วงเวลาที่บันทึกสำเร็จ
+        List of 4 scheduled calendar events as dictionaries.
     """
     return create_followup_schedule(lead_name, email_subject, deal_value)
 
 
 def scheduler_send_briefing_tool(html_content: str, recipient_email: str) -> bool:
     """
-    ส่ง Daily Briefing รายงานสรุปรูปแบบ HTML เข้าอีเมลผู้ใช้ (SDR) และบันทึกลงใน data/briefing.html
+    Send the daily briefing HTML report to the user's (SDR) email and save it locally to data/briefing.html.
     
     Args:
-        html_content: เนื้อหา HTML สรุปฉบับเต็มของวันนี้
-        recipient_email: อีเมลของ SDR ผู้รับรายงานสรุป
+        html_content: Full HTML content of today's briefing report.
+        recipient_email: SDR recipient email address.
         
     Returns:
-        True หากจำลองหรือส่งออกสำเร็จ
+        True if sent or simulated successfully.
     """
     try:
         data_dir = Path("data")
@@ -72,24 +72,24 @@ def scheduler_send_briefing_tool(html_content: str, recipient_email: str) -> boo
         briefing_file = data_dir / "briefing.html"
         with open(briefing_file, "w", encoding="utf-8") as f:
             f.write(html_content)
-        print(f"   💾 Saved local briefing copy to: {briefing_file.absolute()}")
+        print(f"   [File] Saved local briefing copy to: {briefing_file.absolute()}")
     except Exception as e:
-        print(f"   ⚠️ Failed to save local briefing HTML: {str(e)}")
+        print(f"   [Warning] Failed to save local briefing HTML: {str(e)}")
 
     return send_briefing_email(html_content, recipient_email)
 
 
 def scheduler_generate_html_briefing_tool(leads_data_json: str, sdr_name: str, style_description: str) -> str:
     """
-    สร้างรายงาน Daily Briefing HTML รูปแบบพรีเมียม สวยงาม จากข้อมูลดราฟต์และตารางนัดหมายปฏิทิน
+    Generate a premium, formatted HTML Daily Briefing report from the compiled drafts and calendar schedules.
     
     Args:
-        leads_data_json: ข้อมูล JSON string ของ Leads ทั้งหมดที่รวมรายละเอียดของ Lead, ข้อมูลการค้นคว้า (research), ร่างอีเมล (email_draft), และตารางนัดหมายปฏิทิน (calendar_schedule) เข้าด้วยกันแล้ว
-        sdr_name: ชื่อของ SDR
-        style_description: คำอธิบายสไตล์ของ SDR
+        leads_data_json: JSON string containing details of all Leads including research, email drafts, and calendar schedules.
+        sdr_name: Name of the SDR.
+        style_description: Writing style description of the SDR.
         
     Returns:
-        เนื้อหา HTML ที่จัดรูปแบบสวยงามเรียบร้อยแล้ว
+        Formatted HTML content string.
     """
     import json
     from tools.email_tools import generate_html_briefing
@@ -100,10 +100,10 @@ def scheduler_generate_html_briefing_tool(leads_data_json: str, sdr_name: str, s
         return f"Error generating HTML briefing: {str(e)}"
 
 
-# สร้าง Scheduler Agent
+# Instantiate Scheduler Agent
 scheduler_agent = Agent(
     name="scheduler_agent",
-    description="Agent สำหรับการจัดตารางติดตามงานปฏิทินและจัดส่ง Daily Briefing HTML (Calendar Follow-up & Briefing Agent)",
+    description="Agent for calendar follow-up scheduling and Daily Briefing delivery (Calendar Follow-up & Briefing Agent)",
     model=ADK_MODEL,
     instruction=SCHEDULER_AGENT_INSTRUCTION,
     tools=[scheduler_create_schedule_tool, scheduler_send_briefing_tool, scheduler_generate_html_briefing_tool],

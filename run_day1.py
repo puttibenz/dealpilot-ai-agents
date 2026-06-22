@@ -1,6 +1,6 @@
 """
 DealPilot — Day 1 Runner Script
-รัน CRM Agent standalone และแสดงผลการจัดอันดับลูกค้าเป้าหมายใน terminal
+Run CRM Agent standalone and print lead prioritization results in the terminal.
 """
 
 import json
@@ -9,10 +9,10 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
-# บังคับการแสดงผลภาษาไทยให้ถูกต้องบน Windows console
+# Force output stream encoding to utf-8
 sys.stdout.reconfigure(encoding='utf-8')
 
-# โหลด env จากโปรเจกต์ root
+# Load environment variables
 load_dotenv()
 
 from google.adk.runners import Runner
@@ -28,7 +28,7 @@ def main():
     # 1. ตรวจสอบ API Key
     if not os.getenv("GOOGLE_API_KEY"):
         print("❌ ERROR: GOOGLE_API_KEY not found in environment or .env file.")
-        print("กรุณาสร้างไฟล์ .env และใส่ GOOGLE_API_KEY ของคุณก่อนรัน")
+        print("Please create a .env file and set GOOGLE_API_KEY before running.")
         sys.exit(1)
         
     csv_path = os.getenv("CRM_CSV_PATH", "data/mock_crm.csv")
@@ -43,10 +43,10 @@ def main():
     print(f"🧠 LLM Model: {crm_agent.model}")
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
 
-    # 2. เตรียมข้อความสั่งงาน (ส่งพาธไฟล์ CRM ไปให้ Agent ประมวลผล)
+    # 2. Prepare user message instructing CRM Agent to prioritize leads
     new_message = types.Content(
         role="user",
-        parts=[types.Part(text=f"กรุณาจัดอันดับ leads จากไฟล์ CSV นี้: {csv_path}")]
+        parts=[types.Part(text=f"Please fetch and rank the leads from this CSV file: {csv_path}")]
     )
 
     # 3. สร้าง Runner ของ ADK เพื่อควบคุมและจัดเก็บ Session
@@ -57,26 +57,26 @@ def main():
         auto_create_session=True
     )
 
-    print("⏳ กำลังเรียกใช้ CRM Agent เพื่อประมวลผลข้อมูลและคำนวณคะแนน...")
+    print("⏳ Calling CRM Agent to retrieve and prioritize leads...")
     
     final_text = ""
     try:
-        # รัน Agent แบบ stream ดึงคำตอบออกแสดงผล
+        # Stream the Agent execution response
         for event in runner.run(user_id="sdr_001", session_id="session_day1", new_message=new_message):
             if event.content and event.content.parts:
                 for part in event.content.parts:
                     if part.text:
                         final_text += part.text
                         
-        print("\n✅ การประมวลผลของ Agent เสร็จสิ้น!")
+        print("\n✅ Agent prioritization process complete!")
         print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         
-        # 4. แปลงคำตอบ JSON และแสดงผลในรูปแบบ Dashboard ที่สวยงาม
+        # 4. Parse the JSON response and display as a leaderboard dashboard
         try:
             output_data = json.loads(final_text)
             ranked_leads = output_data.get("ranked_leads", [])
             
-            print(f"\n🎯 Top {len(ranked_leads)} Leads ที่มีโอกาสสูงสุดในการปิดดีลวันนี้:")
+            print(f"\n🎯 Top {len(ranked_leads)} Leads with the highest win probability today:")
             print("=" * 80)
             
             for item in ranked_leads:
@@ -92,18 +92,18 @@ def main():
                 stage = lead.get("deal_stage")
                 last_contact = lead.get("last_contact_date")
                 
-                print(f"🏆 อันดับ #{priority} | คะแนน: {score} | ดีล: ${value:,.2f}")
-                print(f"👤 ผู้ติดต่อ: {name} ({email}) | บริษัท: {company}")
-                print(f"📈 ขั้นตอนดีล: {stage} | ติดต่อล่าสุด: {last_contact}")
-                print(f"💡 เหตุผลการจัดอันดับ: {reason}")
+                print(f"🏆 Rank #{priority} | Score: {score} | Deal Value: ${value:,.2f}")
+                print(f"👤 Contact: {name} ({email}) | Company: {company}")
+                print(f"📈 Deal Stage: {stage} | Last Contacted: {last_contact}")
+                print(f"💡 Ranking Reason: {reason}")
                 print("-" * 80)
                 
         except json.JSONDecodeError:
-            print("⚠️ ไม่สามารถแปลงคำตอบเป็น JSON ได้โดยตรง ผลลัพธ์ดิบ:")
+            print("⚠️ Could not parse the response as JSON. Raw output:")
             print(final_text)
             
     except Exception as e:
-        print(f"❌ เกิดข้อผิดพลาดในการรัน Agent: {str(e)}")
+        print(f"❌ Error occurred while running the Agent: {str(e)}")
         import traceback
         traceback.print_exc()
 

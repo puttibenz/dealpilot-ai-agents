@@ -1,6 +1,6 @@
 """
 DealPilot — Day 3 Pipeline Runner Script
-รันระบบ Multi-Agent (CRM Agent -> Research Agent -> Writer Agent) ร่วมกันแบบบูรณาการ
+Run integrated Multi-Agent system (CRM Agent -> Research Agent -> Writer Agent).
 """
 
 import argparse
@@ -10,10 +10,10 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
-# บังคับการแสดงผลภาษาไทยให้ถูกต้องบน Windows console
+# Force output stream encoding to utf-8 for consistency
 sys.stdout.reconfigure(encoding='utf-8')
 
-# โหลด env จากโปรเจกต์ root
+# Load environment variables
 load_dotenv()
 
 from google.adk.runners import Runner
@@ -26,13 +26,13 @@ from agents.writer_agent import writer_agent, load_sdr_style
 
 
 def main():
-    # 1. จัดการพารามิเตอร์ CLI
+    # 1. Parse CLI arguments
     parser = argparse.ArgumentParser(description="DealPilot Day 3 Pipeline Demo")
     parser.add_argument(
         "--sdr-id",
         type=str,
         default="sdr_001",
-        help="รหัส SDR ที่ต้องการจำลองสไตล์การเขียน (sdr_001 = สมชาย, sdr_002 = เควิน)"
+        help="SDR ID to simulate writing style (sdr_001 = Somchai, sdr_002 = Kevin)"
     )
     args = parser.parse_args()
 
@@ -50,20 +50,19 @@ def main():
         print(f"❌ ERROR: CRM file not found at {absolute_csv_path}")
         sys.exit(1)
 
-    # โหลดโปรไฟล์ SDR
+    # Load SDR profile
     sdr_profile = load_sdr_style(args.sdr_id)
     print(f"📂 CRM Data File: {absolute_csv_path}")
     print(f"👤 SDR Persona: {sdr_profile.get('sdr_name')} (ID: {args.sdr_id})")
     print(f"📝 Style Description: {sdr_profile.get('style_description')}")
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     
+    # STEP 1: Run CRM Agent (Rank Leads)
     # --------------------------------------------------------------------------
-    # STEP 1: รัน CRM Agent (จัดอันดับ Leads)
-    # --------------------------------------------------------------------------
-    print("\n[Step 1] ⏳ กำลังเรียกใช้ CRM Agent เพื่อคัดกรอง Top 5 Leads...")
+    print("\n[Step 1] [Running] Calling CRM Agent to filter Top 5 Leads...")
     crm_message = types.Content(
         role="user",
-        parts=[types.Part(text=f"กรุณาจัดอันดับ leads จากไฟล์ CSV นี้: {csv_path}")]
+        parts=[types.Part(text=f"Please rank the leads from this CSV file: {csv_path}")]
     )
     crm_runner = Runner(
         agent=crm_agent,
@@ -79,9 +78,9 @@ def main():
                 for part in event.content.parts:
                     if part.text:
                         crm_text += part.text
-        print("✅ CRM Agent วิเคราะห์สำเร็จ!")
+        print("✅ CRM Agent analysis complete!")
     except Exception as e:
-        print(f"❌ เกิดข้อผิดพลาดในการรัน CRM Agent: {str(e)}")
+        print(f"❌ Error occurred while running CRM Agent: {str(e)}")
         sys.exit(1)
 
     # Parse CRM
@@ -89,24 +88,23 @@ def main():
         crm_data = json.loads(crm_text)
         ranked_leads = crm_data.get("ranked_leads", [])
     except json.JSONDecodeError as e:
-        print("❌ ERROR: ไม่สามารถแปลงเอาต์พุตของ CRM Agent เป็น JSON ได้")
+        print("❌ ERROR: Could not parse CRM Agent output as JSON")
         print(f"ERROR DETAILS: {str(e)}")
         print(f"RAW OUTPUT:\n{crm_text}")
         sys.exit(1)
 
     if not ranked_leads:
-        print("⚠️ ไม่พบข้อมูล Ranked Leads")
+        print("⚠️ No Ranked Leads found")
         sys.exit(0)
 
     companies = [item.get("lead", {}).get("company") for item in ranked_leads if item.get("lead", {}).get("company")]
-    print(f"🎯 ได้รับรายชื่อ {len(companies)} บริษัทเป้าหมาย: {', '.join(companies)}")
+    print(f"🎯 Received {len(companies)} target companies: {', '.join(companies)}")
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
+    # STEP 2: Run Research Agent (Analyze news and pain points)
     # --------------------------------------------------------------------------
-    # STEP 2: รัน Research Agent (วิเคราะห์ข่าวสารและปัญหา)
-    # --------------------------------------------------------------------------
-    print("\n[Step 2] ⏳ กำลังส่งรายชื่อบริษัทไปให้ Research Agent วิเคราะห์ข่าวสารและปัญหา...")
-    research_input_text = f"กรุณาช่วยค้นหาข่าวสารวิเคราะห์และสกัดประเด็นเปิดการขายสำหรับบริษัทเหล่านี้: {', '.join(companies)}"
+    print("\n[Step 2] [Running] Sending company names to Research Agent for analysis...")
+    research_input_text = f"Please research and analyze news, pain points, and suggest talking points for these companies: {', '.join(companies)}"
     research_message = types.Content(
         role="user",
         parts=[types.Part(text=research_input_text)]
@@ -125,9 +123,9 @@ def main():
                 for part in event.content.parts:
                     if part.text:
                         research_text += part.text
-        print("✅ Research Agent วิเคราะห์ข่าวสารสำเร็จ!")
+        print("✅ Research Agent analysis complete!")
     except Exception as e:
-        print(f"❌ เกิดข้อผิดพลาดในการรัน Research Agent: {str(e)}")
+        print(f"❌ Error occurred while running Research Agent: {str(e)}")
         sys.exit(1)
 
     # Parse Research
@@ -135,26 +133,25 @@ def main():
         research_data = json.loads(research_text)
         research_results = research_data.get("research_results", [])
     except json.JSONDecodeError:
-        print("❌ ERROR: ไม่สามารถแปลงเอาต์พุตของ Research Agent เป็น JSON ได้")
+        print("❌ ERROR: Could not parse Research Agent output as JSON")
         sys.exit(1)
 
     research_by_company = {item.get("company", "").lower().strip(): item for item in research_results}
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
+    # STEP 3: Run Writer Agent (Draft personalized emails)
     # --------------------------------------------------------------------------
-    # STEP 3: รัน Writer Agent (เขียนดราฟต์อีเมลรายบุคคล)
-    # --------------------------------------------------------------------------
-    print(f"\n[Step 3] ⏳ กำลังเรียกใช้ Writer Agent เพื่อร่างอีเมลในสไตล์ {sdr_profile.get('sdr_name')}...")
+    print(f"\n[Step 3] [Running] Invoking Writer Agent to draft emails in the style of {sdr_profile.get('sdr_name')}...")
     
-    # ดึงตัวอย่างอีเมลในอดีต (Few-shot) เพื่อนำมาจัดรูปแบบลงในข้อความพรอมต์
+    # Retrieve past emails (Few-shot examples)
     past_emails_formatted = ""
     for idx, sample in enumerate(sdr_profile.get("past_emails", [])):
-        past_emails_formatted += f"\nตัวอย่างที่ {idx+1}:\nหัวข้อ: {sample.get('subject')}\nเนื้อหา:\n{sample.get('body')}\n"
+        past_emails_formatted += f"\nExample #{idx+1}:\nSubject: {sample.get('subject')}\nBody:\n{sample.get('body')}\n"
 
     sdr_context_info = (
-        f"ชื่อ SDR: {sdr_profile.get('sdr_name')}\n"
-        f"คำอธิบายสไตล์การเขียน: {sdr_profile.get('style_description')}\n"
-        f"--- ตัวอย่างอีเมลในอดีต (Few-shot Examples) ---{past_emails_formatted}"
+        f"SDR Name: {sdr_profile.get('sdr_name')}\n"
+        f"Writing Style Description: {sdr_profile.get('style_description')}\n"
+        f"--- Past Emails (Few-shot Examples) ---{past_emails_formatted}"
     )
 
     draft_emails = {}
@@ -166,32 +163,32 @@ def main():
         value = lead.get("deal_value", 0.0)
         stage = lead.get("deal_stage", "")
         
-        # ค้นคว้าข้อมูลบริษัท
+        # Fetch company research info
         research_info = research_by_company.get(company.lower().strip(), {})
         news = research_info.get("recent_news", [])
         pain_points = research_info.get("pain_points", [])
         talking_points = research_info.get("talking_points", [])
         sources = research_info.get("sources", [])
         
-        # รวบรวมข้อมูลสำหรับสร้างเมล
+        # Compile information for email generation
         writer_input_text = (
-            f"--- ข้อมูลลูกค้าเป้าหมาย ---\n"
-            f"ชื่อผู้ติดต่อ: {name}\n"
-            f"อีเมล: {email}\n"
-            f"บริษัท: {company}\n"
-            f"มูลค่าดีล: ${value:,.2f}\n"
-            f"ขั้นตอนดีล: {stage}\n\n"
-            f"--- ข้อมูลวิจัยบริษัท ---\n"
-            f"ข่าวเด่น: {', '.join(news)}\n"
-            f"จุดท้าทาย (Pain points): {', '.join(pain_points)}\n"
-            f"ประเด็นเปิดการขายแนะนำ (Talking points): {', '.join(talking_points)}\n"
-            f"แหล่งอ้างอิง: {', '.join(sources)}\n\n"
-            f"--- ข้อมูลโปรไฟล์ SDR ---\n"
+            f"--- Target Lead Info ---\n"
+            f"Contact Name: {name}\n"
+            f"Email: {email}\n"
+            f"Company: {company}\n"
+            f"Expected Deal Value: ${value:,.2f}\n"
+            f"Deal Stage: {stage}\n\n"
+            f"--- Company Research Info ---\n"
+            f"Recent News: {', '.join(news)}\n"
+            f"Challenges (Pain points): {', '.join(pain_points)}\n"
+            f"Suggested Talking points: {', '.join(talking_points)}\n"
+            f"Sources: {', '.join(sources)}\n\n"
+            f"--- SDR Profile Info ---\n"
             f"{sdr_context_info}\n\n"
-            f"กรุณาร่างอีเมลเสนอขายภาษาไทยในสไตล์ของ SDR คนนี้โดยดึงจุดเด่นข้อมูลวิจัยมาใช้ประโยชน์"
+            f"Please draft the sales email in English in the style of this SDR by utilizing the highlights of the research."
         )
         
-        print(f" ✍️ กำลังร่างอีเมลให้ Lead #{idx+1}: {name} ({company})...")
+        print(f" [Writer] Drafting email for Lead #{idx+1}: {name} ({company})...")
         
         writer_message = types.Content(
             role="user",
@@ -216,19 +213,19 @@ def main():
             draft_emails[company.lower().strip()] = json.loads(writer_text)
             
         except Exception as e:
-            print(f"  ⚠️ ร่างอีเมลล้มเหลวสำหรับ {company}: {str(e)}")
+            print(f"  [Warning] Email draft failed for {company}: {str(e)}")
             draft_emails[company.lower().strip()] = {
-                "subject": "สอบถามข้อมูลเพิ่มเติม",
-                "body": "ร่างอีเมลล้มเหลวเนื่องจากข้อผิดพลาดในระบบ",
-                "opening_hook": "ไม่มี",
-                "personalization_notes": "ข้อผิดพลาดระบบ"
+                "subject": "Request for Information",
+                "body": "Email draft failed due to system error.",
+                "opening_hook": "None",
+                "personalization_notes": "System Error"
             }
 
     # --------------------------------------------------------------------------
-    # DISPLAY: แสดงบอร์ดแบบบูรณาการ CRM + Research + Email Drafts
+    # DISPLAY: Print integrated dashboard
     # --------------------------------------------------------------------------
     print("\n================================================================================")
-    print("📧 DEALPILOT DAILY BRIEFINIG DASHBOARD — CRM, RESEARCH & PERSONALIZED EMAILS")
+    print("📧 DEALPILOT DAILY BRIEFING DASHBOARD — CRM, RESEARCH & PERSONALIZED EMAILS")
     print("================================================================================")
     
     for item in ranked_leads:
@@ -241,24 +238,24 @@ def main():
         value = lead.get("deal_value", 0.0)
         stage = lead.get("deal_stage")
         
-        # ดึงร่างอีเมล
+        # Get draft email details
         email_draft = draft_emails.get(company.lower().strip(), {})
-        subject = email_draft.get("subject", "ไม่พบหัวข้ออีเมล")
-        body = email_draft.get("body", "ไม่พบเนื้อหาอีเมล")
-        hook = email_draft.get("opening_hook", "ไม่พบประโยคเปิด")
-        notes = email_draft.get("personalization_notes", "ไม่ระบุ")
+        subject = email_draft.get("subject", "Email subject not found")
+        body = email_draft.get("body", "Email body not found")
+        hook = email_draft.get("opening_hook", "Opening hook not found")
+        notes = email_draft.get("personalization_notes", "Not specified")
         
-        print(f"🏆 อันดับ #{priority} | {name} @ {company} | คะแนนโอกาสชนะ: {score} | มูลค่าดีล: ${value:,.2f} ({stage})")
-        print(f"📝 จุดบันทึกการทักทายเฉพาะตัว (Personalization Notes):\n  » {notes}")
-        print(f"📬 ร่างอีเมล (สำนวนของ SDR: {sdr_profile.get('sdr_name')}):")
-        print(f"  [หัวข้อ]: {subject}")
+        print(f"🏆 Rank #{priority} | {name} @ {company} | Score: {score} | Deal: ${value:,.2f} ({stage})")
+        print(f"📝 Personalization Notes:\n  » {notes}")
+        print(f"📬 Email Draft (SDR Persona: {sdr_profile.get('sdr_name')}):")
+        print(f"  [Subject]: {subject}")
         print("  " + "-" * 76)
-        # เติมย่อหน้าเพื่อให้ดูจัดวางสวยงามใน terminal
+        # Format body block indentation
         formatted_body = "  " + body.replace("\n", "\n  ")
         print(formatted_body)
         print("=" * 80)
         
-    print("\n🎉 สิ้นสุดรายงานการสร้างดราฟต์อีเมล Pipeline CRM + Research + Writer เรียบร้อยแล้ว!")
+    print("\n🎉 Integrated Pipeline (CRM + Research + Writer) finished successfully!")
 
 
 if __name__ == "__main__":

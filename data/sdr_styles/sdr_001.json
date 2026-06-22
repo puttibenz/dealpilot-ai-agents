@@ -1,19 +1,19 @@
 {
   "sdr_id": "sdr_001",
-  "sdr_name": "สมชาย (Somchai)",
-  "style_description": "สไตล์ทางการ, สุภาพมาก, มีระเบียบแบบแผน, และอ้างอิงสถิติหรือความคุ้มค่าเชิงธุรกิจเชิงตัวเลขเป็นหลัก. มักขึ้นต้นด้วยคำว่า 'เรียน คุณ...' และลงท้ายด้วย 'ขอแสดงความนับถืออย่างสูง' หรือ 'ด้วยความเคารพอย่างสูง'.",
+  "sdr_name": "Somchai",
+  "style_description": "Professional style, very polite, structured, and primarily refers to business value statistics or numerical business value metrics. Often starts with 'Dear [Name],' and ends with 'Best regards,' or 'Respectfully yours,'.",
   "past_emails": [
     {
-      "subject": "โอกาสการประหยัดต้นทุนด้านไอทีและระบบคลาวด์สำหรับ TechCorp",
-      "body": "เรียน คุณอลิส,\n\nผมได้ติดตามผลการดำเนินงานด้านโครงสร้างพื้นฐานคลาวด์ของทาง TechCorp Inc และพบว่าแพลตฟอร์มการจัดการอัตโนมัติของเราสามารถช่วยลดค่าใช้จ่ายด้านวิศวกรรมข้อมูลลงได้เฉลี่ยถึง 30% ภายในไตรมาสแรกหลังการติดตั้ง\n\nกระผมจึงอยากขอเรียนเชิญปรึกษาเพื่อนำเสนอข้อมูลสถิติเปรียบเทียบในวันพฤหัสบดีนี้เวลา 10:00 น. ไม่ทราบว่าท่านจะสะดวกหรือไม่ครับ?\n\nขอแสดงความนับถืออย่างสูง,\nสมชาย\nฝ่ายพัฒนาธุรกิจ"
+      "subject": "IT Cost Optimization and Cloud Management Opportunities for TechCorp",
+      "body": "Dear Alice,\n\nI have been following TechCorp Inc's cloud infrastructure performance and found that our automation platform can help reduce data engineering costs by an average of 30% within the first quarter post-deployment.\n\nI would like to invite you for a brief call to present comparative statistics this Thursday at 10:00 AM. Would you be available?\n\nBest regards,\nSomchai\nBusiness Development Department"
     },
     {
-      "subject": "การประเมินประสิทธิภาพความปลอดภัยข้อมูลเครือข่ายสำหรับ Shield Tech",
-      "body": "เรียน คุณสตีฟ,\n\nสืบเนื่องจากการประกาศมาตรฐานความปลอดภัยเครือข่ายฉบับใหม่สำหรับผู้รับเหมาภาครัฐ ทางเราได้พัฒนาระบบตรวจสอบสิทธิ์และเฝ้าระวังภัยคุกคามแบบเรียลไทม์ ซึ่งช่วยยกระดับความเร็วในการรับมือภัยคุกคามได้ถึง 40% ตามรายงานอุตสาหกรรมล่าสุด\n\nกระผมขอเรียนเสนอเอกสารการวิเคราะห์ประสิทธิภาพเบื้องต้นสำหรับความมั่นคงปลอดภัยของระบบ Shield Tech หากท่านสะดวกให้ทางเราชี้แจงผ่านทางระบบสตรีมในวันพุธนี้ ทางเรายินดีเป็นอย่างยิ่งครับ\n\nขอแสดงความนับถืออย่างสูง,\nสมชาย\nฝ่ายพัฒนาธุรกิจ"
+      "subject": "Network Data Security Performance Evaluation for Shield Tech",
+      "body": "Dear Steve,\n\nFollowing the announcement of the new network security standards for government contractors, we have developed a real-time authentication and threat monitoring system which has improved threat response speed by 40% according to recent industry reports.\n\nI would like to propose a preliminary performance analysis report for Shield Tech's system security. If you are available for a brief walkthrough via stream this Wednesday, we would be delighted to connect.\n\nBest regards,\nSomchai\nBusiness Development Department"
     },
     {
-      "subject": "รายงานการเพิ่มประสิทธิภาพความเสถียรข้อมูลธุรกรรมของ Apex Finance",
-      "body": "เรียน คุณอีแวน,\n\nจากข้อมูลอัตราการเจริญเติบโตด้านธุรกรรมดิจิทัลที่เพิ่มขึ้นอย่างก้าวกระโดดของ Apex Finance ทางเราได้ช่วยเหลือสถาบันการเงินที่คล้ายคลึงกันในการจัดการความปลอดภัยและเพิ่มเสถียรภาพความเร็วการรับส่งข้อมูลผ่าน AI Agents ซึ่งช่วยลดข้อผิดพลาดในระบบลง 25%\n\nหากท่านสะดวกเปิดให้ทางเราเข้าร่วมหารือสั้นๆ เพื่อชี้แจงรายงานผลตอบแทนการลงทุน (ROI) ทางเราพร้อมเข้าพบในเวลาที่ท่านสะดวกครับ\n\nขอแสดงความนับถืออย่างสูง,\nสมชาย\nฝ่ายพัฒนาธุรกิจ"
+      "subject": "Apex Finance Transaction Stability Performance Report",
+      "body": "Dear Evan,\n\nIn light of Apex Finance's exponential growth in digital transactions, we have assisted similar financial institutions in managing security and enhancing data transmission stability using AI Agents, which has reduced system errors by 25%.\n\nIf you are available for a brief discussion to walk through the return on investment (ROI) report, I am ready to meet at your convenience.\n\nBest regards,\nSomchai\nBusiness Development Department"
     }
   ]
 }
