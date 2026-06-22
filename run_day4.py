@@ -244,22 +244,32 @@ def main():
     # --------------------------------------------------------------------------
     # STEP 4: รัน Scheduler Agent (จัดนัดหมายปฏิทินและจัดส่งรายงานสรุป)
     # --------------------------------------------------------------------------
-    print("\n[Step 4] ⏳ กำลังเรียกใช้ Scheduler Agent เพื่อจัดตารางกิจกรรมในปฏิทินและส่ง Daily Briefing...")
+    print("\n[Step 4] ⏳ กำลังคำนวณวันและสร้างตารางปฏิทินติดตามผลใน Google Calendar...")
     
     # รวบรวมข้อมูลเพื่อจัดส่งในรูปแบบ JSON string
     scheduler_input_data = []
+    from tools.calendar_tools import create_followup_schedule
+    
     for item in ranked_leads:
         company_key = item.get("lead", {}).get("company", "").lower().strip()
         lead = item.get("lead", {})
         research_info = research_by_company.get(company_key, {})
         email_draft = draft_emails.get(company_key, {})
         
+        print(f" 📅 กำลังสร้างกิจกรรมติดตามผลบนปฏิทินสำหรับ: {lead.get('name')} ({lead.get('company')})...")
+        calendar_schedule = create_followup_schedule(
+            lead_name=lead.get("name"),
+            email_subject=email_draft.get("subject", "สอบถามข้อมูลเพิ่มเติม"),
+            deal_value=lead.get("deal_value", 0.0)
+        )
+        
         scheduler_input_data.append({
             "priority": item.get("priority"),
             "score": item.get("score"),
             "lead": lead,
             "research": research_info,
-            "email_draft": email_draft
+            "email_draft": email_draft,
+            "calendar_schedule": calendar_schedule
         })
 
     scheduler_input_json = json.dumps(scheduler_input_data, ensure_ascii=False, indent=2)
@@ -269,14 +279,13 @@ def main():
         f"- ชื่อ SDR: {sdr_profile.get('sdr_name')}\n"
         f"- รายละเอียดสไตล์: {sdr_profile.get('style_description')}\n"
         f"- อีเมลผู้รับรายงาน: {args.recipient_email}\n\n"
-        f"--- ข้อมูลลูกค้าวิจัย และร่างอีเมลเสนอขาย (JSON) ---\n"
+        f"--- ข้อมูลลูกค้าวิจัย ร่างอีเมลเสนอขาย และตารางปฏิทิน (JSON) ---\n"
         f"{scheduler_input_json}\n\n"
         f"กรุณาดำเนินการดังนี้:\n"
-        f"1. เรียกใช้งานเครื่องมือ `scheduler_create_schedule_tool` สำหรับลูกค้าแต่ละรายเพื่อสร้างตารางปฏิทินติดตามผล โดยใช้ชื่อจริง ยอดดีล และหัวข้อร่างอีเมลเสนอขาย\n"
-        f"2. รวมข้อมูลนัดหมายปฏิทินที่สร้างกลับเข้ามาใส่ในข้อมูลโครงสร้างลูกค้าของแต่ละรายในฟิลด์ 'calendar_schedule'\n"
-        f"3. ส่งข้อมูล JSON ที่รวมปฏิทินแล้วไปยังเครื่องมือ `scheduler_generate_html_briefing_tool` ร่วมกับชื่อ SDR และสไตล์ของท่าน เพื่อแปลงเป็นหน้าบอร์ด HTML สุดหรู\n"
-        f"4. นำผลลัพธ์ HTML ส่งไปยังอีเมลของท่าน ({args.recipient_email}) ด้วยเครื่องมือ `scheduler_send_briefing_tool`\n"
-        f"5. ส่งคืน JSON สรุปตามโครงสร้าง `SchedulerAgentOutputSchema` (ระบุ briefing_html_path เป็น 'data/briefing.html')"
+        f"1. ข้อมูลกิจกรรมปฏิทินในฟิลด์ 'calendar_schedule' ได้รับการสร้างเรียบร้อยแล้ว ห้ามเรียกใช้เครื่องมือสร้างปฏิทินเพิ่ม\n"
+        f"2. คุณต้องนำข้อมูล JSON ทั้งหมดนี้ (ห้ามตัดทอน) ส่งให้กับเครื่องมือ `scheduler_generate_html_briefing_tool` ร่วมกับชื่อ SDR และรายละเอียดสไตล์ เพื่อแปลงเป็นหน้าบอร์ด HTML\n"
+        f"3. นำผลลัพธ์ HTML ส่งไปยังอีเมลของท่าน ({args.recipient_email}) ด้วยเครื่องมือ `scheduler_send_briefing_tool` ทันที\n"
+        f"4. ส่งคืน JSON สรุปตามโครงสร้าง `SchedulerAgentOutputSchema` โดยดึงข้อมูลนัดหมายปฏิทินทั้งหมดจากอินพุตมาใส่ใน 'scheduled_events' และระบุ 'briefing_html_path' เป็น 'data/briefing.html'"
     )
 
     scheduler_message = types.Content(
