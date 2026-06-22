@@ -50,8 +50,47 @@ with open(PROMPT_PATH, "r", encoding="utf-8") as f:
 ADK_MODEL = os.getenv("ADK_MODEL", "gemini-2.5-flash")
 
 
+from datetime import datetime
+
+def lead_to_dict(lead: Lead) -> dict:
+    return {
+        "id": lead.id,
+        "name": lead.name,
+        "company": lead.company,
+        "email": lead.email,
+        "deal_value": lead.deal_value,
+        "deal_stage": lead.deal_stage,
+        "last_contact_date": lead.last_contact_date.strftime("%Y-%m-%d"),
+        "notes": lead.notes
+    }
+
+def dict_to_lead(d: dict) -> Lead:
+    try:
+        last_contact_date = datetime.strptime(d["last_contact_date"], "%Y-%m-%d")
+    except Exception:
+        last_contact_date = datetime.now()
+    return Lead(
+        id=d["id"],
+        name=d["name"],
+        company=d["company"],
+        email=d["email"],
+        deal_value=d["deal_value"],
+        deal_stage=d["deal_stage"],
+        last_contact_date=last_contact_date,
+        notes=d.get("notes")
+    )
+
+def ranked_lead_to_dict(rl: RankedLead) -> dict:
+    return {
+        "lead": lead_to_dict(rl.lead),
+        "score": rl.score,
+        "score_reason": rl.score_reason,
+        "priority": rl.priority
+    }
+
+
 # กำหนด tools สำหรับ Agent
-def crm_fetch_tool(filepath: str) -> List[Lead]:
+def crm_fetch_tool(filepath: str) -> List[dict]:
     """
     ดึงข้อมูล leads ทั้งหมดจากไฟล์ CRM CSV
     
@@ -59,12 +98,13 @@ def crm_fetch_tool(filepath: str) -> List[Lead]:
         filepath: พาธของไฟล์ CSV ที่เก็บข้อมูล leads
         
     Returns:
-        รายการของ Lead objects ทั้งหมด
+        รายการของ Leads ในรูปแบบพจนานุกรม (dictionaries)
     """
-    return fetch_leads_from_csv(filepath)
+    leads = fetch_leads_from_csv(filepath)
+    return [lead_to_dict(l) for l in leads]
 
 
-def lead_scorer_tool(leads: List[Lead], top_n: int = 5) -> List[RankedLead]:
+def lead_scorer_tool(leads: List[dict], top_n: int = 5) -> List[dict]:
     """
     คำนวณคะแนน (score) และจัดอันดับ leads (rank) ตามโอกาสในการปิดดีล
     
@@ -73,24 +113,27 @@ def lead_scorer_tool(leads: List[Lead], top_n: int = 5) -> List[RankedLead]:
         top_n: จำนวน leads ที่สำคัญที่สุดที่ต้องการส่งคืน (ค่าเริ่มต้นคือ 5)
         
     Returns:
-        รายการของ RankedLead objects เรียงจากคะแนนสูงสุดลงมา
+        รายการของ RankedLeads ในรูปแบบ dictionaries เรียงจากคะแนนสูงสุดลงมา
     """
-    return rank_leads(leads, top_n=top_n)
+    lead_objects = [dict_to_lead(l) for l in leads]
+    ranked_objects = rank_leads(lead_objects, top_n=top_n)
+    return [ranked_lead_to_dict(rl) for rl in ranked_objects]
 
 
-def fetch_and_rank_leads_tool(filepath: str, top_n: int = 5) -> List[RankedLead]:
+def fetch_and_rank_leads_tool(filepath: str, top_n: int = 5) -> List[dict]:
     """
-    ดึงข้อมูล leads จากไฟล์ CSV และจัดอันดับเป็น RankedLead ในขั้นตอนเดียว
+    ดึงข้อมูล leads จากไฟล์ CSV และจัดอันดับเป็น RankedLeads ในขั้นตอนเดียว
     
     Args:
         filepath: พาธของไฟล์ CSV
         top_n: จำนวน leads ที่ต้องการจัดอันดับ
         
     Returns:
-        รายการของ RankedLead objects เรียงจากคะแนนสูงสุดลงมา
+        รายการของ RankedLeads ในรูปแบบ dictionaries เรียงจากคะแนนสูงสุดลงมา
     """
     leads = fetch_leads_from_csv(filepath)
-    return rank_leads(leads, top_n=top_n)
+    ranked_objects = rank_leads(leads, top_n=top_n)
+    return [ranked_lead_to_dict(rl) for rl in ranked_objects]
 
 
 # สร้าง CRM Agent
