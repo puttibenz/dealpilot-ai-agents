@@ -67,7 +67,7 @@ cp .env.example .env
 # แก้ไข .env ใส่ API keys จริง
 
 # 5. Run
-adk run dealpilot --sdr-id="sdr_001" --output=briefing.html
+python run_day4.py --sdr-id="sdr_001" --output=data/briefing_sdr001.html --recipient-email="puttimej@gmail.com"
 ```
 
 ### Production Deployment
@@ -82,19 +82,19 @@ gcloud run deploy dealpilot --image dealpilot --region us-central1
 
 ### Run via CLI
 ```bash
-adk run dealpilot --sdr-id="sdr_001" --output=briefing.html
+python run_day4.py --sdr-id="sdr_001" --output=data/briefing_sdr001.html --recipient-email="your_email@example.com"
 ```
 
 ### Web UI
 ```bash
-uvicorn ui.app:app --reload
-# เปิด http://localhost:8000
+python ui/app.py
+# เปิด http://localhost:8080
 ```
 
 ## Security
 - Google Cloud Secret Manager สำหรับ API keys
-- Input sanitization ป้องกัน prompt injection
-- PII masking ใน logs
+- Input sanitization ป้องกัน prompt injection ใน tools/crm_tools.py
+- PII masking สำหรับปกปิดอีเมลและเบอร์โทรศัพท์ใน logs ด้วย utils/logging.py
 
 ## Tech Stack
 
