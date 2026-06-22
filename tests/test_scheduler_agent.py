@@ -3,7 +3,101 @@ Tests for Scheduler Agent
 Implementation: วันที่ 4
 """
 
-# TODO วันที่ 4: Implement tests
-# - test_create_followup_schedule: สร้าง schedule Day 0/3/7/14 ถูกต้อง
-# - test_generate_html_briefing: HTML มีข้อมูลครบ 5 leads
-# - test_send_briefing_email: ส่ง email สำเร็จ (mock)
+import os
+import json
+import pytest
+from pathlib import Path
+from unittest.mock import patch
+from tools.calendar_tools import create_followup_schedule
+from tools.email_tools import generate_html_briefing, send_briefing_email
+
+
+@pytest.fixture(autouse=True)
+def force_mock_mode():
+    """บังคับให้ทุกฟังก์ชันรันในโหมด Mock เสมอ โดยการจำลองให้ get_google_credentials คืนค่า None"""
+    with patch("tools.calendar_tools.get_google_credentials", return_value=None):
+        with patch("tools.email_tools.get_google_credentials", return_value=None):
+            yield
+
+
+def test_create_followup_schedule():
+    """ทดสอบการคำนวณวันและบันทึกตารางนัดหมายติดตามผล 4 ช่วงเวลาในระบบ Mock"""
+    lead_name = "Bruce Wayne"
+    subject = "AI Security Monitoring Systems"
+    deal_value = 180000.0
+    
+    # ลบไฟล์ปฏิทินจำลองก่อนเริ่มเทส
+    mock_file = Path("data/mock_calendar.json")
+    if mock_file.exists():
+        mock_file.unlink()
+        
+    events = create_followup_schedule(lead_name, subject, deal_value)
+    
+    assert len(events) == 4
+    assert events[0]["title"] == f"ส่งอีเมลแรกเสนอขาย: {lead_name}"
+    assert events[1]["title"] == f"Follow-up #1: {lead_name}"
+    assert events[2]["title"] == f"Follow-up #2: {lead_name}"
+    assert events[3]["title"] == f"Break-up Email: {lead_name}"
+    
+    # ตรวจสอบการเขียนลงไฟล์โลคัล
+    assert mock_file.exists()
+    with open(mock_file, "r", encoding="utf-8") as f:
+        file_events = json.load(f)
+        assert len(file_events) >= 4
+        assert file_events[-1]["lead_name"] == lead_name
+
+
+def test_generate_html_briefing():
+    """ทดสอบโครงสร้าง HTML ของ Daily Briefing ว่าสร้างมาอย่างสวยงามและข้อมูลครบถ้วน"""
+    drafts = [
+        {
+            "priority": 1,
+            "score": 98.2,
+            "lead": {
+                "id": "lead_001",
+                "name": "Bruce Wayne",
+                "company": "Wayne Enterprises",
+                "email": "bruce@wayne.com",
+                "deal_value": 150000.0,
+                "deal_stage": "negotiation",
+                "last_contact_date": "2026-06-20",
+                "notes": "Interested in enterprise plan."
+            },
+            "research": {
+                "company": "Wayne Enterprises",
+                "recent_news": ["Wayne Enterprises announces new clean energy initiatives"],
+                "pain_points": ["ความยากลำบากในการปรับระบบโรงงานแบบเดิม"],
+                "talking_points": ["ยินดีด้วยกับนวัตกรรมสะอาดตัวใหม่ครับ"],
+                "sources": ["Bloomberg"]
+            },
+            "email_draft": {
+                "subject": "สอบถามแผนงานพัฒนาพลังงานสะอาดร่วมกัน",
+                "body": "สวัสดีคุณบรูซ...",
+                "opening_hook": "ยินดีด้วยครับ...",
+                "personalization_notes": "ใช้ประเด็นเรื่องข่าวพลังงานสะอาด"
+            },
+            "calendar_schedule": [
+                {"title": "ส่งอีเมลแรกเสนอขาย: Bruce Wayne", "date": "2026-06-22", "mode": "mock"},
+                {"title": "Follow-up #1: Bruce Wayne", "date": "2026-06-25", "mode": "mock"}
+            ]
+        }
+    ]
+    
+    html = generate_html_briefing(drafts, sdr_name="สมชาย", style_description="สุภาพ เป็นทางการ")
+    
+    assert "Daily Sales Briefing Report" in html
+    assert "Bruce Wayne" in html
+    assert "Wayne Enterprises" in html
+    assert "$150,000.00" in html
+    assert "สมชาย" in html
+    assert "สุภาพ เป็นทางการ" in html
+    assert "ความท้าทาย (Pain Points)" in html
+
+
+def test_send_briefing_email():
+    """ทดสอบฟังก์ชันส่ง Daily Briefing ในโหมดจำลอง"""
+    html_content = "<h1>Daily Report</h1>"
+    recipient = "sales_rep@company.com"
+    
+    success = send_briefing_email(html_content, recipient)
+    assert success is True

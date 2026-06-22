@@ -32,3 +32,4 @@ data/output/
 logs/
 *.log
 briefing*.html
+token.json
