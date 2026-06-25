@@ -359,7 +359,7 @@ def run_pipeline_page():
 
 
 @app.get("/run/stream")
-def stream_pipeline():
+async def stream_pipeline():
     """Streams live console stdout from run_day4.py to EventSource in the browser."""
     async def log_generator():
         python_exec = sys.executable
