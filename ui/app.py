@@ -174,6 +174,9 @@ def view_raw_report():
     return HTMLResponse("<h1>No report found</h1>")
 
 
+pipeline_process = None
+
+
 @app.get("/run", response_class=HTMLResponse)
 def run_pipeline_page():
     """Control panel page running the agent pipeline with live-streaming terminal output."""
@@ -315,42 +318,58 @@ def run_pipeline_page():
             const spinner = document.getElementById('spinner');
             const btnView = document.getElementById('btn-view');
             
-            terminal.innerHTML = "=== INITIALIZING PIPELINE RUN ===\n";
+            terminal.innerHTML = "=== INITIALIZING PIPELINE RUN ===\\n";
             
-            // Connect to EventSource for live logs
-            const eventSource = new EventSource('/run/stream');
-            
-            eventSource.onmessage = function(event) {{
-                terminal.innerHTML += event.data + "\\n";
-                terminal.scrollTop = terminal.scrollHeight;
-                
-                // Update status text based on stdout logs
-                if (event.data.includes("Step 1")) {{
-                    statusText.innerText = "Ranking CRM leads via CRM Agent...";
-                }} else if (event.data.includes("Step 2")) {{
-                    statusText.innerText = "Querying business highlights via Research Agent...";
-                }} else if (event.data.includes("Step 3")) {{
-                    statusText.innerText = "Drafting personalized sales emails via Writer Agent...";
-                }} else if (event.data.includes("Step 4")) {{
-                    statusText.innerText = "Scheduling calendar events and sending Daily Briefing via Scheduler Agent...";
-                }}
-            }};
-            
-            eventSource.addEventListener('close', function(event) {{
-                statusText.innerText = "Multi-Agent pipeline run completed successfully!";
-                statusText.style.color = "#34d399";
-                spinner.style.display = "none";
-                btnView.style.display = "inline-block";
-                eventSource.close();
-            }});
-            
-            eventSource.onerror = function(event) {{
-                statusText.innerText = "Pipeline executed successfully!";
-                statusText.style.color = "#34d399";
-                spinner.style.display = "none";
-                btnView.style.display = "inline-block";
-                eventSource.close();
-            }};
+            // Start the pipeline runner in the background
+            fetch('/run/start')
+                .then(response => response.json())
+                .then(data => {{
+                    terminal.innerHTML += "System initialized. Starting sequential agents...\\n";
+                    
+                    // Poll log status every 1 second
+                    const pollInterval = setInterval(() => {{
+                        fetch('/run/status')
+                            .then(res => res.json())
+                            .then(status => {{
+                                if (status.logs) {{
+                                    terminal.innerHTML = "=== INITIALIZING PIPELINE RUN ===\\n" + status.logs;
+                                    terminal.scrollTop = terminal.scrollHeight;
+                                    
+                                    // Update status text based on logs
+                                    if (status.logs.includes("Step 1")) {{
+                                        statusText.innerText = "Ranking CRM leads via CRM Agent...";
+                                    }}
+                                    if (status.logs.includes("Step 2")) {{
+                                        statusText.innerText = "Querying business highlights via Research Agent...";
+                                    }}
+                                    if (status.logs.includes("Step 3")) {{
+                                        statusText.innerText = "Drafting personalized sales emails via Writer Agent...";
+                                    }}
+                                    if (status.logs.includes("Step 4")) {{
+                                        statusText.innerText = "Scheduling calendar events and sending Daily Briefing via Scheduler Agent...";
+                                    }}
+                                }}
+                                
+                                // Check if finished
+                                if (!status.is_running) {{
+                                    clearInterval(pollInterval);
+                                    statusText.innerText = "Multi-Agent pipeline run completed successfully!";
+                                    statusText.style.color = "#34d399";
+                                    spinner.style.display = "none";
+                                    btnView.style.display = "inline-block";
+                                }}
+                            }})
+                            .catch(err => {{
+                                console.error("Error fetching pipeline status:", err);
+                            }});
+                    }}, 1000);
+                }})
+                .catch(err => {{
+                    terminal.innerHTML += "[ERROR] Failed to start pipeline runner: " + err + "\\n";
+                    statusText.innerText = "Error starting pipeline!";
+                    statusText.style.color = "#ef4444";
+                    spinner.style.display = "none";
+                }});
         </script>
     </body>
     </html>
@@ -358,51 +377,79 @@ def run_pipeline_page():
     return HTMLResponse(content=html_page)
 
 
-@app.get("/run/stream")
-async def stream_pipeline():
-    """Streams live console stdout from run_day4.py to EventSource in the browser."""
-    async def log_generator():
-        python_exec = sys.executable
-        # Use -u to make stdout unbuffered
-        cmd = [
-            python_exec,
-            "-u",
-            "run_day4.py",
-            "--sdr-id", "sdr_001",
-            "--output", "data/briefing_sdr001.html",
-            "--recipient-email", os.getenv("BRIEFING_RECIPIENT_EMAIL", "puttimej@gmail.com")
-        ]
+@app.get("/run/start")
+def start_pipeline():
+    """Starts the run_day4.py pipeline in the background and writes logs to a file."""
+    global pipeline_process
+    
+    # If a process is already running, don't start another one
+    if pipeline_process and pipeline_process.poll() is None:
+        return {"status": "already_running"}
         
-        env = os.environ.copy()
-        env["PYTHONPATH"] = "."
-        
+    log_file_path = DATA_DIR / "pipeline_run.log"
+    DATA_DIR.mkdir(exist_ok=True)
+    
+    # Clear old log file
+    if log_file_path.exists():
         try:
-            process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                env=env
-            )
+            log_file_path.unlink()
+        except Exception:
+            pass
             
-            while True:
-                line = await process.stdout.readline()
-                if not line:
-                    break
-                
-                decoded_line = line.decode('utf-8', errors='replace').rstrip()
-                # Apply PII Masking to log streams
-                from utils.logging import mask_pii
-                masked_line = mask_pii(decoded_line)
-                
-                yield f"data: {masked_line}\n\n"
-                await asyncio.sleep(0.05)
-                
-            await process.wait()
-            yield "data: [SYSTEM] Pipeline runner subprocess completed with status 0\n\n"
+    python_exec = sys.executable
+    cmd = [
+        python_exec,
+        "-u",
+        "run_day4.py",
+        "--sdr-id", "sdr_001",
+        "--output", "data/briefing_sdr001.html",
+        "--recipient-email", os.getenv("BRIEFING_RECIPIENT_EMAIL", "puttimej@gmail.com")
+    ]
+    
+    env = os.environ.copy()
+    env["PYTHONPATH"] = "."
+    
+    try:
+        # Open log file for output redirection
+        log_file = open(log_file_path, "w", encoding="utf-8", errors="replace")
+        pipeline_process = subprocess.Popen(
+            cmd,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            env=env
+        )
+        return {"status": "started"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/run/status")
+def get_pipeline_status():
+    """Reads the masked logs from the pipeline_run.log file."""
+    global pipeline_process
+    
+    log_file_path = DATA_DIR / "pipeline_run.log"
+    logs = ""
+    
+    if log_file_path.exists():
+        try:
+            with open(log_file_path, "r", encoding="utf-8", errors="replace") as f:
+                logs = f.read()
         except Exception as e:
-            yield f"data: [ERROR] Failed to run pipeline runner: {str(e)}\n\n"
+            logs = f"Error reading logs: {str(e)}"
             
-    return StreamingResponse(log_generator(), media_type="text/event-stream")
+    # Apply PII Masking
+    from utils.logging import mask_pii
+    masked_logs = mask_pii(logs)
+    
+    is_running = False
+    if pipeline_process and pipeline_process.poll() is None:
+        is_running = True
+        
+    return {
+        "is_running": is_running,
+        "logs": masked_logs
+    }
 
 
 if __name__ == "__main__":
